@@ -4,3 +4,4 @@ brew() {
     echo "Your brew is wrapped by brew-offload"
     /workspaces/homebrew-offload/bin/brew-offload "$@"
 }
+export -f brew
