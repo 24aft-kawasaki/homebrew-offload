@@ -1,0 +1,18 @@
+{
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "workbench.colorTheme": "Default Dark+"
+            },
+            "extensions": [
+                "gxl.git-graph-3"
+            ]
+        }
+    },
+    "postCreateCommand": {
+        // Array: Passed to the OS for execution without going through a shell
+        // String: Goes through a shell
+        // Object: Object types to allow for parallel execution
+        "install-brew": "make --directory=.devcontainer install-brew"
+    }
+}
