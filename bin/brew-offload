@@ -1,3 +1,31 @@
-#!/usr/bin/bash
+#!/usr/bin/env python3.12
 
-brew "$@"
+import subprocess
+
+class BrewOffload:
+    def __init__(self, *args):
+        self._args = args
+    
+    def exec_brew(self):
+        """execute brew"""
+        subprocess.run(["brew"] + [*self._args])
+    
+    def exec_custom_offload(self):
+        """Execute custom offload operations not provided by Homebrew.
+
+        This method is intended for implementing additional tasks or custom logic
+        that extend beyond the standard functionality of Homebrew."""
+  
+        pass
+    
+    def offlad(self):
+        """offload formulae"""
+        pass
+
+def main():
+    # parse args
+    # if args[0] == "offload":
+    #     BrewOffload(*args[1:]).offlad()
+    # else:
+    #    BrewOffload(*args).exec_brew()
+    pass
