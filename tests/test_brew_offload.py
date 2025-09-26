@@ -1,14 +1,19 @@
 import unittest
 import subprocess
 import os
+from pathlib import Path
 
 class BrewOffloadTestCase(unittest.TestCase):
+    def setUp(self):
+        path = os.environ["PATH"]
+        brew_path = Path("/home/linuxbrew/.linuxbrew/bin")
+        brew_offload_path = Path("./bin/brew-offload")
+        path = ":".join((str(brew_offload_path.absolute()), str(brew_path.absolute()), path))
+        os.environ["PATH"] = path
+
     def test_brew_is_wrapped(self):
-        env = os.environ.copy()
-        env["PS1"] = "$"
-        completed = subprocess.run(
-            "source ~/.bashrc && type brew && brew --version",
-            text=True, capture_output=True, shell=True, executable="/bin/bash", env=env
+        result = subprocess.run(
+            "source etc/brew-wrap; brew --version",
+            shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
-        print(completed.stdout)
-        self.assertEqual(completed.stdout, "Your brew is wrapped by brew-offload")
+        self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
