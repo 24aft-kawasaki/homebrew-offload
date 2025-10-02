@@ -3,6 +3,8 @@ import subprocess
 import os
 from pathlib import Path
 
+from . import brew_offload
+
 class BrewOffloadTestCase(unittest.TestCase):
     def setUp(self):
         path = os.environ["PATH"]
@@ -17,3 +19,22 @@ class BrewOffloadTestCase(unittest.TestCase):
             shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
+
+    def test_argument_parse(self):
+        args=["brew-offload", "wrapped", "list", "--help"]
+        with self.subTest(args=args):
+            namespace = brew_offload.arg_parse(*args)
+            expected = {"offload": False, "original_brew_args": ["list", "--help"]}
+            self.assertDictEqual(vars(namespace), expected)
+        
+        args=["brew-offload", "wrapped", "offload", "add"]
+        with self.subTest(args=args):
+            namespace = brew_offload.arg_parse(*args)
+            expected = {"offload": True, "subcommand": "add"}
+            self.assertDictEqual(vars(namespace), expected)
+        
+        args=["brew-offload", "remove"]
+        with self.subTest(args=args):
+            namespace = brew_offload.arg_parse(*args)
+            expected = {"offload": True, "subcommand": "remove"}
+            self.assertDictEqual(vars(namespace), expected)

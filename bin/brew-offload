@@ -1,3 +1,43 @@
-#!/usr/bin/bash
+#!/usr/bin/env python3
 
-brew "$@"
+import argparse
+
+def arg_parse(*args: str) -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("wrapped")
+    parser.add_argument("remainder", nargs=argparse.REMAINDER)
+    namespace = parser.parse_args(args[1:])
+    if namespace.wrapped == "wrapped":
+        parser = argparse.ArgumentParser(prog="brew")
+        parser.add_argument("offload")
+        parser.add_argument("remainder", nargs=argparse.REMAINDER)
+        namespace_offload = parser.parse_args(namespace.remainder)
+        if namespace_offload.offload == "offload":
+            parser = argparse.ArgumentParser(prog="brew offload")
+            subparsers = parser.add_subparsers(title="subcommands")
+            subparsers.add_parser("add")
+            subparsers.add_parser("remove")
+            result = parser.parse_args(namespace_offload.remainder)
+            result.offload = True
+            result.subcommand = namespace_offload.remainder[0]
+        else:
+            result = argparse.Namespace()
+            result.offload = False
+            result.original_brew_args = namespace.remainder
+    else:
+        parser = argparse.ArgumentParser(prog="brew-offload")
+        subparsers = parser.add_subparsers(title="subcommands")
+        subparsers.add_parser("add")
+        subparsers.add_parser("remove")
+        result = parser.parse_args(args[1:])
+        result.offload = True
+        result.subcommand = args[1]
+
+    return result
+
+def main() -> int:
+    return 0
+
+if __name__ == "__main__":
+    exit(main())
