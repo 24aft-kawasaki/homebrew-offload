@@ -24,7 +24,7 @@ class BrewOffload:
         """offload formulae"""
         pass
 
-def arg_parse(*args: list[str]):
+def arg_parse(*args: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     
     parser.add_argument("wrapped")
@@ -34,33 +34,29 @@ def arg_parse(*args: list[str]):
         parser = argparse.ArgumentParser(prog="brew")
         parser.add_argument("offload")
         parser.add_argument("remainder", nargs=argparse.REMAINDER)
-        namespace = parser.parse_args(namespace.remainder)
-        if namespace.offload == "offload":
+        namespace_offload = parser.parse_args(namespace.remainder)
+        if namespace_offload.offload == "offload":
             parser = argparse.ArgumentParser(prog="brew offload")
+            subparsers = parser.add_subparsers(title="subcommands")
+            subparsers.add_parser("add")
+            subparsers.add_parser("remove")
+            result = parser.parse_args(namespace_offload.remainder)
+            result.offload = True
+            result.subcommand = namespace_offload.remainder[0]
         else:
-            pass
+            result = argparse.Namespace()
+            result.offload = False
+            result.original_brew_args = namespace.remainder
     else:
         parser = argparse.ArgumentParser(prog="brew-offload")
         subparsers = parser.add_subparsers(title="subcommands")
         subparsers.add_parser("add")
         subparsers.add_parser("remove")
-        namespace = parser.parse_args(args[1:])
+        result = parser.parse_args(args[1:])
+        result.offload = True
+        result.subcommand = args[1]
 
-    """
-    if args[1] == "--wrapped":
-        parser = argparse.ArgumentParser(prog="brew")
-        parser.add_argument("subcommand")
-        
-
-        subparsers = parser.add_subparsers()
-        offload_parser = subparsers.add_parser("offload")
-        offload_parser.add_argument("subcommand")
-        parser.print_usage()
-        namespace = parser.parse_args(args[2:])
-    else:
-        parser = argparse.ArgumentParser(prog="brew-offload")
-    """
-    return namespace
+    return result
 
 def main() -> int:
     # parse args
@@ -71,6 +67,4 @@ def main() -> int:
     pass
 
 if __name__ == "__main__":
-    result = arg_parse("brew", "hoge")
-    print(result)
     exit(main())

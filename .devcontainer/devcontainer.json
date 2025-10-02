@@ -5,7 +5,8 @@
                 "workbench.colorTheme": "Default Dark+"
             },
             "extensions": [
-                "gxl.git-graph-3"
+                "gxl.git-graph-3",
+                "ms-python.python"
             ]
         }
     },
