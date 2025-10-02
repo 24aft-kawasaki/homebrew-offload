@@ -24,7 +24,7 @@ class BrewOffload:
         """offload formulae"""
         pass
 
-def arg_parse(*args: list[str]) -> argparse.Namespace:
+def arg_parse(*args: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     
     parser.add_argument("wrapped")
@@ -64,7 +64,7 @@ def main() -> int:
     #     BrewOffload(*args[1:]).offlad()
     # else:
     #    BrewOffload(*args).exec_brew()
-    pass
+    return 0
 
 if __name__ == "__main__":
     exit(main())
