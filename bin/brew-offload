@@ -1,6 +1,25 @@
 #!/usr/bin/env python3
 
 import argparse
+import subprocess
+import sys
+
+class BrewOffload:
+    def __init__(self, args: list[str]) -> None:
+        self.args = arg_parse(*args)
+    
+    def execute(self) -> int:
+        return 0
+
+    def execute_original_brew(self, original_brew_args: list[str]) -> int:
+        completedProcess = subprocess.run(
+            ["brew"] + original_brew_args,
+            stdout=None, stderr=None
+        )
+
+        return completedProcess.returncode
+
+        
 
 def arg_parse(*args: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -35,7 +54,12 @@ def arg_parse(*args: str) -> argparse.Namespace:
     return result
 
 def main() -> int:
-    return 0
+    brew_offload = BrewOffload(sys.argv)
+    if brew_offload.args.offload:
+        pass
+    else:
+        return brew_offload.execute_original_brew(brew_offload.args.original_brew_args)
+    return 1
 
 if __name__ == "__main__":
     exit(main())

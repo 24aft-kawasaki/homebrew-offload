@@ -38,3 +38,15 @@ class BrewOffloadTestCase(unittest.TestCase):
             namespace = brew_offload.arg_parse(*args)
             expected = {"offload": True, "subcommand": "remove"}
             self.assertDictEqual(vars(namespace), expected)
+
+    def test_brew_offload_pass_through(self):
+        args = ["brew-offload", "wrapped", "list"]
+        with self.subTest(args=args):
+            bf = brew_offload.BrewOffload(args)
+            returncode = bf.execute_original_brew(bf.args.original_brew_args)
+            self.assertEqual(returncode, 0)
+        args = ["brew-offload", "wrapped", "info", "nonexistent-formula"]
+        with self.subTest(args=args):
+            bf = brew_offload.BrewOffload(args)
+            returncode = bf.execute_original_brew(bf.args.original_brew_args)
+            self.assertNotEqual(returncode, 0)
