@@ -33,23 +33,23 @@ def arg_parse(*args: str) -> argparse.Namespace:
         parser.add_argument("remainder", nargs=argparse.REMAINDER)
         namespace_offload = parser.parse_args(namespace.remainder)
         if namespace_offload.offload == "offload":
-            parser = argparse.ArgumentParser(prog="brew offload")
-            subparsers = parser.add_subparsers(title="subcommands")
-            subparsers.add_parser("add").set_defaults(subcommand="add")
-            subparsers.add_parser("remove").set_defaults(subcommand="remove")
-            result = parser.parse_args(namespace_offload.remainder)
-            result.offload = True
+            prog = "brew offload"
         else:
             result = argparse.Namespace()
             result.offload = False
             result.original_brew_args = namespace.remainder
+            return result
     else:
-        parser = argparse.ArgumentParser(prog="brew-offload")
-        subparsers = parser.add_subparsers(title="subcommands")
-        subparsers.add_parser("add").set_defaults(subcommand="add")
-        subparsers.add_parser("remove").set_defaults(subcommand="remove")
-        result = parser.parse_args(args[1:])
-        result.offload = True
+        prog = "brew-offload"
+        namespace_offload = argparse.Namespace()
+        namespace_offload.remainder = args[1:]
+
+    parser = argparse.ArgumentParser(prog=prog)
+    subparsers = parser.add_subparsers(title="subcommands")
+    subparsers.add_parser("add").set_defaults(subcommand="add")
+    subparsers.add_parser("remove").set_defaults(subcommand="remove")
+    result = parser.parse_args(namespace_offload.remainder)
+    result.offload = True
 
     return result
 
