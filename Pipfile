@@ -9,5 +9,5 @@ name = "pypi"
 [dev-packages]
 
 [requires]
-python_version = "3.12"
-python_full_version = "3.12.3"
+python_version = "3.13"
+python_full_version = "3.13.7"
