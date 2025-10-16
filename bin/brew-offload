@@ -25,7 +25,7 @@ class BrewOffload:
         return 0
     
     def get_offload_formulae(self) -> list[str]:
-        return ["python@3.13"]
+        return ["python@3.12"]
     
     def offload(self) -> int:
         offload_formulae = self.get_offload_formulae()
@@ -34,16 +34,10 @@ class BrewOffload:
             dst = self.target_path / formula
             if (self.brew_cellar_path / formula).is_symlink():
                 continue
-            def ignore_existing_files(src, names):
-                existing = []
-                for name in names:
-                    if (Path(src) / name).exists():
-                        existing.append(name)
-                return existing
             shutil.copytree(
                 self.brew_cellar_path / formula,
                 self.target_path / formula,
-                symlinks=True, dirs_exist_ok=True, ignore=ignore_existing_files)
+                symlinks=True, dirs_exist_ok=True)
             shutil.rmtree(self.brew_cellar_path / formula)
             os.symlink(src, dst, target_is_directory=True)
         return 0
