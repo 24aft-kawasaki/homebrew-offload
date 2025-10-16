@@ -31,15 +31,13 @@ class BrewOffload:
         offload_formulae = self.get_offload_formulae()
         for formula in offload_formulae:
             src = self.brew_cellar_path / formula
-            dst = self.target_path / formula
-            if (self.brew_cellar_path / formula).is_symlink():
+            dst = (self.target_path / formula).absolute()
+            if (src).is_symlink():
                 continue
-            shutil.copytree(
-                self.brew_cellar_path / formula,
-                self.target_path / formula,
+            shutil.copytree(src, dst,
                 symlinks=True, dirs_exist_ok=True)
-            shutil.rmtree(self.brew_cellar_path / formula)
-            os.symlink(src, dst, target_is_directory=True)
+            shutil.rmtree(src)
+            os.symlink(dst, src, target_is_directory=True)
         return 0
 
     def execute_original_brew(self, original_brew_args: list[str]) -> int:

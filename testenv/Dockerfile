@@ -2,6 +2,8 @@ FROM homebrew/brew:latest
 
 WORKDIR $HOME/testenv/
 
+USER linuxbrew
+
 COPY --chown=linuxbrew ../.devcontainer/Makefile ./.devcontainer/
 COPY --chown=linuxbrew ../offload ./offload/
 COPY --chown=linuxbrew ../bin ./bin/

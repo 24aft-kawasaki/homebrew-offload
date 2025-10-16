@@ -52,7 +52,7 @@ class BrewOffloadTestCase(unittest.TestCase):
             self.assertNotEqual(returncode, 0)
 
     def test_offload_function(self):
-        formula = "python@3.13"
+        formula = "python@3.12"
         bf = brew_offload.BrewOffload(["brew-offload", "wrapped", "list"])
         self.assertEqual(bf.offload(), 0)
         cellar_path = bf.brew_cellar_path
@@ -62,7 +62,7 @@ class BrewOffloadTestCase(unittest.TestCase):
             capture_output=True, text=True, check=True
         ).stdout.strip()
         completed = subprocess.run(
-            [brew_prefix + "/opt/python@3.13/bin/python3.13", "--version"],
+            [brew_prefix + "/opt/python@3.12/bin/python3.12", "--version"],
             capture_output=True, text=True, check=True
         )
         self.assertEqual(completed.returncode, 0)

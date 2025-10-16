@@ -11,3 +11,6 @@ name = "pypi"
 [requires]
 python_version = "3.13"
 python_full_version = "3.13"
+
+[scripts]
+test = "python -m unittest tests.test_brew_offload"
