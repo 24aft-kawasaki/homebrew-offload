@@ -9,5 +9,5 @@ services:
         build:
             context: ..
             dockerfile: testenv/Dockerfile
-        tty: true
-        stdin_open: true
+        # tty: true
+        # stdin_open: true

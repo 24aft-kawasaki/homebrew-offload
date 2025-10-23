@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 
-
 [dev-packages]
+python-on-whales = "~=0.78.0"
 
 [requires]
 python_version = "3.13"
