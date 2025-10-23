@@ -50,3 +50,19 @@ class BrewOffloadTestCase(unittest.TestCase):
             bf = brew_offload.BrewOffload(args)
             returncode = bf.execute_original_brew(bf.args.original_brew_args)
             self.assertNotEqual(returncode, 0)
+
+    def test_offload_function(self):
+        formula = "python@3.12"
+        bf = brew_offload.BrewOffload(["brew-offload", "wrapped", "list"])
+        self.assertEqual(bf.offload(), 0)
+        cellar_path = bf.brew_cellar_path
+        self.assertTrue((cellar_path / formula).is_symlink())
+        brew_prefix = subprocess.run(
+            ["brew", "--prefix"],
+            capture_output=True, text=True, check=True
+        ).stdout.strip()
+        completed = subprocess.run(
+            [brew_prefix + "/opt/python@3.12/bin/python3.12", "--version"],
+            capture_output=True, text=True, check=True
+        )
+        self.assertEqual(completed.returncode, 0)
