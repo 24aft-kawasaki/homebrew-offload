@@ -22,10 +22,16 @@ class BrewOffload:
         return Path(result.stdout.strip())
 
     def execute(self) -> int:
-        return 0
+        if self.args.offload is False:
+            return self.execute_original_brew(self.args.original_brew_args)
+        elif self.args.subcommand == "add":
+            return self.offload()
+        elif self.args.subcommand == "remove":
+            raise NotImplementedError("Remove functionality is not implemented yet.")
+        return 1
     
     def get_offload_formulae(self) -> list[str]:
-        return ["python@3.12"]
+        return [self.args.formula]
     
     def offload(self) -> int:
         offload_formulae = self.get_offload_formulae()
@@ -75,8 +81,12 @@ def arg_parse(*args: str) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(prog=prog)
     subparsers = parser.add_subparsers(title="subcommands")
-    subparsers.add_parser("add").set_defaults(subcommand="add")
-    subparsers.add_parser("remove").set_defaults(subcommand="remove")
+    add_parser = subparsers.add_parser("add")
+    add_parser.set_defaults(subcommand="add")
+    add_parser.add_argument("formula")
+    remove_parser = subparsers.add_parser("remove")
+    remove_parser.set_defaults(subcommand="remove")
+    remove_parser.add_argument("formula")
     result = parser.parse_args(namespace_offload.remainder)
     result.offload = True
 
@@ -84,11 +94,7 @@ def arg_parse(*args: str) -> argparse.Namespace:
 
 def main() -> int:
     brew_offload = BrewOffload(sys.argv)
-    if brew_offload.args.offload:
-        pass
-    else:
-        return brew_offload.execute_original_brew(brew_offload.args.original_brew_args)
-    return 1
+    return brew_offload.execute()
 
 if __name__ == "__main__":
     exit(main())
