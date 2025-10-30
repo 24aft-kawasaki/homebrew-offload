@@ -13,4 +13,5 @@ python_version = "3.13"
 python_full_version = "3.13"
 
 [scripts]
+# execute before test `pipenv sync --dev`
 test = "python -m unittest tests.test_brew_offload"
