@@ -10,7 +10,7 @@ from pathlib import Path
 class BrewOffload:
     def __init__(self, args: list[str]) -> None:
         self.args = arg_parse(*args)
-        self.target_path = (DEFAULT_TARGET_PATH := Path("./offload"))
+        self.target_path = (DEFAULT_TARGET_PATH := Path.home() / ".offload")
         self.brew_cellar_path = self.get_brew_cellar_path()
     
     @staticmethod
