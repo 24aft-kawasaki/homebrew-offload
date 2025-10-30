@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
+import logging
 import os
 import shutil
 import subprocess
@@ -9,9 +11,12 @@ from pathlib import Path
 
 class BrewOffload:
     def __init__(self, args: list[str]) -> None:
+        self.log = logging.getLogger(__name__)
+
         self.args = arg_parse(*args)
         self.target_path = (DEFAULT_TARGET_PATH := Path.home() / ".offload")
         self.brew_cellar_path = self.get_brew_cellar_path()
+        self.config_path = Path("/etc/brew-offload/config.toml")
     
     @staticmethod
     def get_brew_cellar_path() -> Path:
@@ -25,26 +30,63 @@ class BrewOffload:
         if self.args.offload is False:
             return self.execute_original_brew(self.args.original_brew_args)
         elif self.args.subcommand == "add":
-            return self.offload()
+            return self.add()
         elif self.args.subcommand == "remove":
             raise NotImplementedError("Remove functionality is not implemented yet.")
         return 1
     
-    def get_offload_formulae(self) -> list[str]:
-        return [self.args.formula]
+    def init_config_file(self) -> int:
+        if not self.config_path.exists(follow_symlinks=True):
+            self.config_path.touch()
+        with open(self.config_path, "wt") as config_file:
+            config = json.load(config_file)
+            if "offloaded_formulae" not in config:
+                config["offloaded_formulae"] = []
+            json.dump(config, config_file)
+        return 0
+
     
-    def offload(self) -> int:
-        offload_formulae = self.get_offload_formulae()
-        for formula in offload_formulae:
-            src = self.brew_cellar_path / formula
-            dst = (self.target_path / formula).absolute()
-            if (src).is_symlink():
+    def add(self) -> int:
+        self.init_config_file()
+        with open(self.config_path, "wt") as config_file:
+            config = json.load(config_file)
+            config["offloaded_formulae"].append(self.args.formula)
+            json.dump(config, config_file)
+
+        return self.sync()
+
+
+    def sync(self) -> int:
+        with open(self.config_path, "rt") as config_file:
+            config = json.load(config_file)
+
+        # offloading
+        for target_formula in config["offloaded_formulae"]:
+            src = (self.brew_cellar_path / target_formula).absolute()
+            dst = (self.target_path / target_formula).absolute()
+
+            if src.is_symlink() and src.resolve().is_dir():
                 continue
+            self.log.info(f"Offloading formula: {target_formula}")
             shutil.copytree(src, dst,
                 symlinks=True, dirs_exist_ok=True)
             shutil.rmtree(src)
             os.symlink(dst, src, target_is_directory=True)
+
+        # onloading
+        for offloaded in self.target_path.iterdir():
+            if offloaded.name in config["offloaded_formulae"]:
+                continue
+            self.log.info(f"Onloading formula: {offloaded.name}")
+            dst = (self.brew_cellar_path / offloaded.name).absolute()
+            src = (self.target_path / offloaded.name).absolute()
+            dst.unlink()
+            shutil.copytree(src, dst, 
+                symlinks=True, dirs_exist_ok=True)
+            shutil.rmtree(src)
+
         return 0
+        
 
     def execute_original_brew(self, original_brew_args: list[str]) -> int:
         completedProcess = subprocess.run(

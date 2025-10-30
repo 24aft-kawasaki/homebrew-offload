@@ -1,5 +1,7 @@
 FROM homebrew/brew:latest
 
+ENV HOME=/home/linuxbrew
+
 WORKDIR $HOME/testenv/
 
 ENV PATH="$PATH:/home/linuxbrew/.local/bin:$HOME/testenv/bin"
@@ -12,5 +14,10 @@ COPY --chown=linuxbrew ../bin ./bin/
 COPY --chown=linuxbrew ../etc ./etc/
 COPY --chown=linuxbrew ../tests ./tests/
 COPY --chown=linuxbrew ../Pipfile ./
+
+COPY --chown=linuxbrew ./etc ./etc/
+
+RUN mkdir -p /etc/brew-offload # rootで実行しなければならない
+RUN ln -s ${HOME}/testenv/etc/brew-offload/config.json /etc/brew-offload/config.json
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]
