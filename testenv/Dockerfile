@@ -12,13 +12,14 @@ RUN brew install python@3.13 python@3.12 pipx \
 
 COPY --chown=linuxbrew ../bin ./bin/
 COPY --chown=linuxbrew ../etc ./etc/
-COPY --chown=linuxbrew ../tests ./tests/
 COPY --chown=linuxbrew ../Pipfile ./
 
 COPY --chown=linuxbrew ./testenv/etc ./etc/
 
-RUN sudo mkdir -p /etc/brew-offload \
-    && sudo ln -s ${HOME}/testenv/etc/brew-offload/config.json /etc/brew-offload/config.json \
-    && sudo chown -h linuxbrew:linuxbrew /etc/brew-offload/config.json
+RUN env
+
+RUN echo ${HOMEBREW_PREFIX}/hoge
+RUN mkdir -p ${HOMEBREW_PREFIX}/etc/brew-offload
+RUN ln -s ${HOME}/testenv/etc/brew-offload/config.json /etc/brew-offload/config.json
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]
