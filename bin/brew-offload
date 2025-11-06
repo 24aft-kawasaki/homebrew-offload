@@ -16,7 +16,7 @@ class BrewOffload:
         self.args = arg_parse(*args)
         self.target_path = (DEFAULT_TARGET_PATH := Path.home() / ".offload")
         self.brew_cellar_path = self.get_brew_cellar_path()
-        self.config_path = Path("/etc/brew-offload/config.toml")
+        self.config_path = Path("/etc/brew-offload/config.json")
     
     @staticmethod
     def get_brew_cellar_path() -> Path:
@@ -38,20 +38,31 @@ class BrewOffload:
     def init_config_file(self) -> int:
         if not self.config_path.exists(follow_symlinks=True):
             self.config_path.touch()
-        with open(self.config_path, "wt") as config_file:
-            config = json.load(config_file)
-            if "offloaded_formulae" not in config:
-                config["offloaded_formulae"] = []
+        with open(self.config_path, "r+t") as config_file:
+            config = {"offloaded_formulae": []}
+            try:
+                config = json.load(config_file)
+                if "offloaded_formulae" in config:
+                    return 0
+            except json.JSONDecodeError:
+                pass
+            config_file.seek(0)
             json.dump(config, config_file)
+            config_file.truncate()
         return 0
 
     
     def add(self) -> int:
         self.init_config_file()
-        with open(self.config_path, "wt") as config_file:
+        with open(self.config_path, "r+t") as config_file:
             config = json.load(config_file)
+            if self.args.formula in config["offloaded_formulae"]:
+                self.log.error(f"Formula '{self.args.formula}' is already offloaded.")
+                return 1
             config["offloaded_formulae"].append(self.args.formula)
+            config_file.seek(0)
             json.dump(config, config_file)
+            config_file.truncate()
 
         return self.sync()
 
@@ -66,6 +77,8 @@ class BrewOffload:
             dst = (self.target_path / target_formula).absolute()
 
             if src.is_symlink() and src.resolve().is_dir():
+                continue
+            if not src.exists():
                 continue
             self.log.info(f"Offloading formula: {target_formula}")
             shutil.copytree(src, dst,
