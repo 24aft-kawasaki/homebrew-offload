@@ -8,3 +8,4 @@ install-brew:
 
 install-python:
 	brew install python@${PYTHON_VERSION}
+	pipenv sync --dev
