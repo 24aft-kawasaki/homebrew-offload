@@ -1,0 +1,13 @@
+# 実行コマンド
+# docker compose --file testenv/compose.yml build --no-cache
+# docker compose --file testenv/compose.yml up
+# docker compose --file testenv/compose.yml down
+# docker image prune -a
+
+services:
+    test:
+        build:
+            context: ..
+            dockerfile: testenv/Dockerfile
+        # tty: true
+        # stdin_open: true
