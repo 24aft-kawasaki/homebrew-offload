@@ -1,0 +1,13 @@
+TAP=24aft-kawasaki/homebrew-offload
+
+brew tap-new $TAP
+
+brew create --set-name=brew-offload --tap=$TAP https://github.com/24aft-kawasaki/homebrew-offload/archive/refs/tags/v0.0.0.tar.gz
+
+
+HOMEBREW_NO_INSTALL_FROM_API=1 brew audit --new brew-offload
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --verbose --debug brew-offload
+
+
+brew tap 24aft-kawasaki/homebrew-offload
+brew install 24aft-kawasaki/homebrew-offload/brew-offload
