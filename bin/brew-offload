@@ -16,12 +16,20 @@ class BrewOffload:
         self.args = arg_parse(*args)
         self.target_path = (DEFAULT_TARGET_PATH := Path.home() / ".offload")
         self.brew_cellar_path = self.get_brew_cellar_path()
-        self.config_path = Path("/etc/brew-offload/config.json")
+        self.config_path = self.get_brew_prefix_path() / "etc/brew-offload/config.json"
     
     @staticmethod
     def get_brew_cellar_path() -> Path:
         result = subprocess.run(
             ["brew", "--cellar"],
+            capture_output=True, text=True, check=True
+        )
+        return Path(result.stdout.strip())
+
+    @staticmethod
+    def get_brew_prefix_path() -> Path:
+        result = subprocess.run(
+            ["brew", "--prefix"],
             capture_output=True, text=True, check=True
         )
         return Path(result.stdout.strip())

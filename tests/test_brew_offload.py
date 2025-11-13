@@ -89,3 +89,16 @@ class BrewOffloadTestCase(unittest.TestCase):
         is_symlink = docker_client.compose.execute("test", ["test", "-L", f"{brew_prefix}/Cellar/{target_formula}"], tty=False)
         # If execute brew doctor, occurs warning for Homebrew maintainers with non-zero return code.
         # docker_client.compose.execute("test", ["brew", "doctor"], tty=False)
+
+    @Docker.with_docker
+    def test_add_offloaded_formula(self, docker_client: Docker.DockerClient):
+        target_formula = "python@3.12"
+        docker_client.compose.execute("test", ["brew-offload", "add", target_formula], tty=False)
+        stdout = docker_client.compose.execute("test", ["bash", "-c", f"brew-offload add {target_formula}; echo $?"], tty=False)
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+
+    @Docker.with_docker
+    def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
+        docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
+        docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
