@@ -102,3 +102,12 @@ class BrewOffloadTestCase(unittest.TestCase):
     def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
         docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
+
+    @Docker.with_docker
+    def test_move_offload_celllar(self, docker_client: Docker.DockerClient):
+        old_offload_cellar = "/home/linuxbrew/.offload"
+        new_offload_cellar = "/home/linuxbrew/testenv/new_cellar"
+        docker_client.compose.execute("test", ["mkdir", "-p", new_offload_cellar], tty=False)
+        docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
+        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", new_offload_cellar], tty=False)
+        docker_client.compose.execute("test", ["python3.12", "--version"], tty=False)
