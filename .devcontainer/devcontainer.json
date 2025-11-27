@@ -5,7 +5,7 @@
                 "workbench.colorTheme": "Default Dark+"
             },
             "extensions": [
-                "gxl.git-graph-3",
+                "mhutchie.git-graph",
                 "ms-python.python"
             ]
         }
@@ -14,6 +14,6 @@
         // Array: Passed to the OS for execution without going through a shell
         // String: Goes through a shell
         // Object: Object types to allow for parallel execution
-        "install-requirements": "make --directory=${containerWorkspaceFolder}/.devcontainer install-brew install-python put-brew-offload-config-file"
+        "install-requirements": "make --directory=${containerWorkspaceFolder}/.devcontainer install-brew install-python link-brew-offload-config-file"
     }
 }
