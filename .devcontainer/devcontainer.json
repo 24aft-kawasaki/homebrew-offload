@@ -1,0 +1,19 @@
+{
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "workbench.colorTheme": "Default Dark+"
+            },
+            "extensions": [
+                "mhutchie.git-graph",
+                "ms-python.python"
+            ]
+        }
+    },
+    "postCreateCommand": {
+        // Array: Passed to the OS for execution without going through a shell
+        // String: Goes through a shell
+        // Object: Object types to allow for parallel execution
+        "install-requirements": "make --directory=${containerWorkspaceFolder}/.devcontainer install-brew install-python link-brew-offload-config-file"
+    }
+}
