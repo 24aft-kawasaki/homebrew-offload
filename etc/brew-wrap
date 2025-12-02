@@ -4,7 +4,3 @@ brew() {
     echo "Your brew is wrapped by brew-offload"
     brew-offload wrapped "$@"
 }
-
-test_hoge() {
-    echo "test hoge"
-}
