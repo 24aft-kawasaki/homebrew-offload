@@ -13,9 +13,10 @@ brew install 24aft-kawasaki/homebrew-offload/brew-offload
 ## Usage
 
 ```
+brew-offload config offload_cellar CELLAR
 brew-offload add FORMULA
 ```
-The specified FORMULA will be offloaded to a different directory. By default, the offload directory is `~/.offload`.
+The specified FORMULA will be offloaded to CELLAR directory. By default, the offload directory is `~/.offload`.
 
 ---
 
