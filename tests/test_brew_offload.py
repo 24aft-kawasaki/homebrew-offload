@@ -35,7 +35,7 @@ class BrewOffloadTestCase(unittest.TestCase):
     def setUpClass(cls):    
         path = os.environ["PATH"]
         brew_path = Path("/home/linuxbrew/.linuxbrew/bin")
-        brew_offload_path = Path("./bin/brew-offload")
+        brew_offload_path = Path("./bin")
         path = ":".join((str(brew_offload_path.absolute()), str(brew_path.absolute()), path))
         os.environ["PATH"] = path
         Docker.build()
@@ -45,6 +45,7 @@ class BrewOffloadTestCase(unittest.TestCase):
             "source etc/brew-wrap; brew --version",
             shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
+        # self.assertEqual(result.stderr, "")
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
 
     def test_argument_parse(self):

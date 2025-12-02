@@ -4,6 +4,8 @@ HOMEBREW_PREFIX:=/home/linuxbrew/.linuxbrew
 
 localWorkspaceFolder:=/workspaces/homebrew-offload
 
+all: install-brew install-python link-brew-offload-config-file set-path-to-brew-offload
+
 install-brew:
 	yes | /bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	echo >> /home/codespace/.bashrc
@@ -17,3 +19,6 @@ link-brew-offload-config-file:
 	mkdir -p ${HOMEBREW_PREFIX}/etc/brew-offload
 	test -n "${localWorkspaceFolder}"
 	ln -s ${localWorkspaceFolder}/testenv/etc/brew-offload/config.json ${HOMEBREW_PREFIX}/etc/brew-offload/config.json
+
+set-path-to-brew-offload:
+	echo 'export PATH="$${PATH}:${localWorkspaceFolder}/bin"' >> $$HOME/.bashrc
