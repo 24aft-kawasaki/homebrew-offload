@@ -200,7 +200,11 @@ def arg_parse(*args: str) -> argparse.Namespace:
         remainder = args[1:]
 
     parser = argparse.ArgumentParser(prog=prog)
-    subparsers = parser.add_subparsers(title="subcommands")
+    # Make a subcommand required so running with no subcommand
+    # causes argparse to show help and exit instead of allowing
+    # the code to continue and later raise AttributeError.
+    # `required` parameter is supported on Python 3.7+.
+    subparsers = parser.add_subparsers(title="subcommands", required=True)
     add_parser = subparsers.add_parser("add")
     add_parser.set_defaults(subcommand="add")
     add_parser.add_argument("formula")
@@ -214,6 +218,10 @@ def arg_parse(*args: str) -> argparse.Namespace:
 
     result = parser.parse_args(remainder)
     result.offload = True
+
+    if not hasattr(result, "subcommand"):
+        parser.print_help()
+        parser.exit(2)
 
     return result
 
