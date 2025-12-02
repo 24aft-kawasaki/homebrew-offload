@@ -186,27 +186,18 @@ class BrewOffload:
         
 
 def arg_parse(*args: str) -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    
-    parser.add_argument("wrapped")
-    parser.add_argument("remainder", nargs=argparse.REMAINDER)
-    namespace = parser.parse_args(args[1:])
-    if namespace.wrapped == "wrapped":
-        parser = argparse.ArgumentParser(prog="brew")
-        parser.add_argument("offload")
-        parser.add_argument("remainder", nargs=argparse.REMAINDER)
-        namespace_offload = parser.parse_args(namespace.remainder)
-        if namespace_offload.offload == "offload":
+    if args[1:] and args[1] == "wrapped":
+        if args[2:] and args[2] == "offload":
             prog = "brew offload"
+            remainder = args[3:]
         else:
             result = argparse.Namespace()
             result.offload = False
-            result.original_brew_args = namespace.remainder
+            result.original_brew_args = list(args[2:])
             return result
     else:
         prog = "brew-offload"
-        namespace_offload = argparse.Namespace()
-        namespace_offload.remainder = args[1:]
+        remainder = args[1:]
 
     parser = argparse.ArgumentParser(prog=prog)
     subparsers = parser.add_subparsers(title="subcommands")
@@ -221,7 +212,7 @@ def arg_parse(*args: str) -> argparse.Namespace:
     config_parser.add_argument("key", choices=["offload_cellar"])
     config_parser.add_argument("value")
 
-    result = parser.parse_args(namespace_offload.remainder)
+    result = parser.parse_args(remainder)
     result.offload = True
 
     return result
