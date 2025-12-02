@@ -45,8 +45,8 @@ class BrewOffloadTestCase(unittest.TestCase):
             "source etc/brew-wrap; brew --version",
             shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
-        # self.assertEqual(result.stderr, "")
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
+        self.assertEqual(result.stderr, "")
 
     def test_argument_parse(self):
         args=["brew-offload", "wrapped", "list", "--help"]
