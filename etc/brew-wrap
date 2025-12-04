@@ -2,5 +2,5 @@
 
 brew() {
     echo "Your brew is wrapped by brew-offload"
-    /workspaces/homebrew-offload/bin/brew-offload wrapped "$@"
+    brew-offload wrapped "$@"
 }

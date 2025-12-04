@@ -35,7 +35,7 @@ class BrewOffloadTestCase(unittest.TestCase):
     def setUpClass(cls):    
         path = os.environ["PATH"]
         brew_path = Path("/home/linuxbrew/.linuxbrew/bin")
-        brew_offload_path = Path("./bin/brew-offload")
+        brew_offload_path = Path("./bin")
         path = ":".join((str(brew_offload_path.absolute()), str(brew_path.absolute()), path))
         os.environ["PATH"] = path
         Docker.build()
@@ -46,6 +46,7 @@ class BrewOffloadTestCase(unittest.TestCase):
             shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
+        self.assertEqual(result.stderr, "")
 
     def test_argument_parse(self):
         args=["brew-offload", "wrapped", "list", "--help"]
@@ -99,6 +100,37 @@ class BrewOffloadTestCase(unittest.TestCase):
         self.assertGreater(return_code, 0)
 
     @Docker.with_docker
+    def test_remove_offloaded_formula(self, docker_client: Docker.DockerClient):
+        target_formula = "python@3.12"
+        target_command = "python3.12"
+        offload_cellar = "/home/linuxbrew/.offload"
+        def execute(*command: str) -> str:
+            return str(docker_client.compose.execute("test", list(command), tty=False))
+        execute("brew-offload", "add", target_formula)
+        execute("brew-offload", "remove", target_formula)
+        execute(target_command, "--version")
+        cellar = execute("brew", "--cellar").strip()
+        stdout = execute("bash", "-c", f"test -L {cellar}/{target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+        stdout = execute("bash", "-c", f"test -d {offload_cellar}/{target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+
+        stdout = execute("bash", "-c", f"brew-offload remove {target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+
+    @Docker.with_docker
     def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
         docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
+
+    @Docker.with_docker
+    def test_move_offload_celllar(self, docker_client: Docker.DockerClient):
+        old_offload_cellar = "/home/linuxbrew/.offload"
+        new_offload_cellar = "/home/linuxbrew/testenv/new_cellar"
+        docker_client.compose.execute("test", ["mkdir", "-p", new_offload_cellar], tty=False)
+        docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
+        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", new_offload_cellar], tty=False)
+        docker_client.compose.execute("test", ["python3.12", "--version"], tty=False)
