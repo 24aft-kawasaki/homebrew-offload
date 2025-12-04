@@ -75,7 +75,7 @@ class BrewOffload:
         elif self.args.subcommand == "add":
             return self.add()
         elif self.args.subcommand == "remove":
-            raise NotImplementedError("Remove functionality is not implemented yet.")
+            return self.remove()            
         elif self.args.subcommand == "config":
             return self.config()
         return 1
@@ -104,6 +104,17 @@ class BrewOffload:
             self.log.error(f"Formula '{self.args.formula}' is already offloaded.")
             return 1
         config["offloaded_formulae"].append(self.args.formula)
+        self.dump_config(config)
+
+        return self.sync()
+
+    def remove(self) -> int:
+        self.init_config_file()
+        config = self.load_config()
+        if self.args.formula not in config["offloaded_formulae"]:
+            self.log.error(f"Formula '{self.args.formula}' is not offloaded.")
+            return 1
+        config["offloaded_formulae"].remove(self.args.formula)
         self.dump_config(config)
 
         return self.sync()
