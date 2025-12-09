@@ -18,13 +18,7 @@ jobs:
 
       - name: Install tools
         run: |
-          echo HOME=${HOME}
-          ls -la
-          echo pwd=$(pwd) # /workspaces/homebrew-offload
-          echo whoami=$(whoami)
-          # find / -name .github
-          
-          make --directory=/run/act/actions/actions-checkout@v4/.github/workflows
+          make --directory=./ci
 
       - name: Get tag name
         id: tag

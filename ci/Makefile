@@ -1,6 +1,6 @@
 PYTHON_VERSION:=3.13
 PATH:=${PATH}:/home/linuxbrew/.linuxbrew/bin
-HOME:=
+
 HOMEBREW_PREFIX:=/home/linuxbrew/.linuxbrew
 
 localWorkspaceFolder:=/workspaces/homebrew-offload
@@ -9,8 +9,8 @@ all: install-brew install-python link-brew-offload-config-file set-path-to-brew-
 
 install-brew:
 	yes | /bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	echo >> /home/codespace/.bashrc
-	echo 'eval "$$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> /home/codespace/.bashrc
+	echo >> ${HOME}/.bashrc
+	echo 'eval "$$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ${HOME}/.bashrc
 
 install-python:
 	brew install python@${PYTHON_VERSION}
