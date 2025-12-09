@@ -13,7 +13,8 @@ install-brew:
 	echo 'eval "$$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ${HOME}/.bashrc
 
 install-python:
-	brew install python@${PYTHON_VERSION}
+	brew install python@${PYTHON_VERSION} pipx
+	pipx install pipenv
 	pipenv sync --dev
 
 link-brew-offload-config-file:
