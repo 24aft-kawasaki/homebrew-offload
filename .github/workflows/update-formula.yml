@@ -1,0 +1,80 @@
+name: Update Homebrew Formula
+
+on:
+  push:
+    tags:
+      - '*'   # すべてのタグ push をトリガーにする
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Install tools
+        run: |
+          echo HOME=${HOME}
+          ls -la
+          echo pwd=$(pwd) # /workspaces/homebrew-offload
+          echo whoami=$(whoami)
+          # find / -name .github
+          
+          make --directory=/run/act/actions/actions-checkout@v4/.github/workflows
+
+      - name: Get tag name
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build tarball URL
+        id: tarball
+        run: |
+          REPO="${GITHUB_REPOSITORY}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Compute sha256
+        id: sha
+        run: |
+          URL="${{ steps.tarball.outputs.url }}"
+          curl -L "$URL" -o source.tar.gz
+          SHA256=$(shasum -a 256 source.tar.gz | awk '{print $1}')
+          echo "sha=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Update Formula.rb
+        run: |
+          FORMULA="Formula/your_formula.rb"
+          URL="${{ steps.tarball.outputs.url }}"
+          SHA="${{ steps.sha.outputs.sha }}"
+
+          sed -i "s|url \".*\"|url \"$URL\"|" "$FORMULA"
+          sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$FORMULA"
+
+      - name: Install Python and dependencies
+        run: |
+          pip install pipenv
+          pipenv install --dev
+
+      - name: Run tests
+        id: tests
+        run: |
+          set +e
+          pipenv run test
+          echo "result=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Commit & push changes
+        if: steps.tests.outputs.result == '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .
+          git commit -m "Update Formula.rb for tag ${{ steps.tag.outputs.tag }}"
+          # git push origin HEAD:main
