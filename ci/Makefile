@@ -18,7 +18,7 @@ install-python:
 	pipx install pipenv
 	echo $$(brew --prefix)
 	pipx ensurepath
-	pipenv sync --dev
+	${SHELL} -c 'pipenv sync --dev'
 
 link-brew-offload-config-file:
 	mkdir -p ${HOMEBREW_PREFIX}/etc/brew-offload
