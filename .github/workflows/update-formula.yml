@@ -54,6 +54,7 @@ jobs:
       - name: Run tests
         id: tests
         run: |
+          export PATH=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
           set +e
           pipenv run test
           echo "result=$?" >> "$GITHUB_OUTPUT"
