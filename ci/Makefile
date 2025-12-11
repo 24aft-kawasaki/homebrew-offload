@@ -17,6 +17,7 @@ install-python:
 	brew install python@${PYTHON_VERSION} pipx
 	pipx install pipenv
 	echo $$(brew --prefix)
+	pipx ensurepath
 	pipenv sync --dev
 
 link-brew-offload-config-file:
