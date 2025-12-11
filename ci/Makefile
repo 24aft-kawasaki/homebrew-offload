@@ -4,7 +4,7 @@ SHELL:=/bin/bash
 
 HOMEBREW_PREFIX:=/home/linuxbrew/.linuxbrew
 
-localWorkspaceFolder:=/workspaces/homebrew-offload
+localWorkspaceFolder?=${GITHUB_WORKSPACE}
 
 all: install-brew install-python link-brew-offload-config-file set-path-to-brew-offload
 
