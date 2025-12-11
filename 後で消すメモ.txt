@@ -12,4 +12,4 @@ HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --verbose --debu
 brew tap 24aft-kawasaki/homebrew-offload
 brew install 24aft-kawasaki/homebrew-offload/brew-offload
 
-act --verbose -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
+act push -e .github/events/push-with-tag.json

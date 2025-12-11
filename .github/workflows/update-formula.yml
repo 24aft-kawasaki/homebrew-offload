@@ -70,6 +70,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add .
+          git add brew-offload.rb
           git commit -m "Update brew-offload.rb for tag ${{ steps.tag.outputs.tag }}"
-          git push origin temp:temp
+          git push origin HEAD:temp
