@@ -23,6 +23,9 @@ install-python:
 link-brew-offload-config-file:
 	mkdir -p ${HOMEBREW_PREFIX}/etc/brew-offload
 	test -n "${localWorkspaceFolder}"
+	pwd
+	echo "PWD=${PWD}"
+	find . -name config.json
 	ln -s ${localWorkspaceFolder}/testenv/etc/brew-offload/config.json ${HOMEBREW_PREFIX}/etc/brew-offload/config.json
 
 set-path-to-brew-offload:
