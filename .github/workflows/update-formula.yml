@@ -1,0 +1,75 @@
+name: Update Homebrew Formula
+
+on:
+  push:
+    tags:
+      - '*'   # すべてのタグ push をトリガーにする
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: temp
+
+      - name: Install tools
+        run: |
+          make --directory=./ci
+
+      - name: Get tag name
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build tarball URL
+        id: tarball
+        run: |
+          REPO="${GITHUB_REPOSITORY}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Compute sha256
+        id: sha
+        run: |
+          URL="${{ steps.tarball.outputs.url }}"
+          curl -L "$URL" -o source.tar.gz
+          SHA256=$(shasum -a 256 source.tar.gz | awk '{print $1}')
+          echo "sha=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Update brew-offload.rb
+        run: |
+          FORMULA="./brew-offload.rb"
+          URL="${{ steps.tarball.outputs.url }}"
+          SHA="${{ steps.sha.outputs.sha }}"
+
+          sed -i "s|url \".*\"|url \"$URL\"|" "$FORMULA"
+          sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$FORMULA"
+
+      - name: Run tests
+        id: tests
+        run: |
+          export PATH=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
+          set +e
+          pipenv run test
+          RESULT=$?
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+          if [ $RESULT -gt 0 ]; then
+            echo tests failed
+            exit 1
+          fi
+
+      - name: Commit & push changes
+        if: steps.tests.outputs.result == '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add brew-offload.rb
+          git commit -m "Update brew-offload.rb for tag ${{ steps.tag.outputs.tag }}"
+          git push origin HEAD:temp
