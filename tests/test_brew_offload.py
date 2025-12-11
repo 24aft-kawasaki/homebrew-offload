@@ -100,6 +100,28 @@ class BrewOffloadTestCase(unittest.TestCase):
         self.assertGreater(return_code, 0)
 
     @Docker.with_docker
+    def test_remove_offloaded_formula(self, docker_client: Docker.DockerClient):
+        target_formula = "python@3.12"
+        target_command = "python3.12"
+        offload_cellar = "/home/linuxbrew/.offload"
+        def execute(*command: str) -> str:
+            return str(docker_client.compose.execute("test", list(command), tty=False))
+        execute("brew-offload", "add", target_formula)
+        execute("brew-offload", "remove", target_formula)
+        execute(target_command, "--version")
+        cellar = execute("brew", "--cellar").strip()
+        stdout = execute("bash", "-c", f"test -L {cellar}/{target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+        stdout = execute("bash", "-c", f"test -d {offload_cellar}/{target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+
+        stdout = execute("bash", "-c", f"brew-offload remove {target_formula}; echo $?")
+        return_code = int(str(stdout).splitlines()[-1])
+        self.assertGreater(return_code, 0)
+
+    @Docker.with_docker
     def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
         docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
