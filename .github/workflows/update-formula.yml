@@ -3,10 +3,13 @@ name: Update Homebrew Formula
 on:
   push:
     tags:
-      - '*'   # すべてのタグ push をトリガーにする
+      - '*'   # any tag
 
 jobs:
   update-formula:
+    permissions:
+      contents: write
+
     runs-on: ubuntu-latest
 
     steps:
