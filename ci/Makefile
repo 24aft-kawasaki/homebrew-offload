@@ -1,5 +1,6 @@
 PYTHON_VERSION:=3.13
 PATH:=${PATH}:/home/linuxbrew/.linuxbrew/bin
+SHELL:=/bin/bash
 
 HOMEBREW_PREFIX:=/home/linuxbrew/.linuxbrew
 
