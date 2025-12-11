@@ -27,6 +27,7 @@ link-brew-offload-config-file:
 	echo "PWD=${PWD}"
 	find . -name config.json
 	ln -s ${localWorkspaceFolder}/testenv/etc/brew-offload/config.json ${HOMEBREW_PREFIX}/etc/brew-offload/config.json
+	cat ${HOMEBREW_PREFIX}/etc/brew-offload/config.json
 
 set-path-to-brew-offload:
 	echo 'export PATH="$${PATH}:${localWorkspaceFolder}/bin"' >> $$HOME/.bashrc
