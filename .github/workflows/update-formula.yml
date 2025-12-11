@@ -42,9 +42,9 @@ jobs:
           SHA256=$(shasum -a 256 source.tar.gz | awk '{print $1}')
           echo "sha=$SHA256" >> "$GITHUB_OUTPUT"
 
-      - name: Update Formula.rb
+      - name: Update brew-offload.rb
         run: |
-          FORMULA="Formula/your_formula.rb"
+          FORMULA="./brew-offload.rb"
           URL="${{ steps.tarball.outputs.url }}"
           SHA="${{ steps.sha.outputs.sha }}"
 
