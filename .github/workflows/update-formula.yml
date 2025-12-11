@@ -57,7 +57,12 @@ jobs:
           export PATH=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
           set +e
           pipenv run test
-          echo "result=$?" >> "$GITHUB_OUTPUT"
+          RESULT=$?
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+          if [ $RESULT -gt 0 ]; then
+            echo tests failed
+            exit 1
+          fi
 
       - name: Commit & push changes
         if: steps.tests.outputs.result == '0'
@@ -66,5 +71,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Update Formula.rb for tag ${{ steps.tag.outputs.tag }}"
-          # git push origin HEAD:main
+          git commit -m "Update brew-offload.rb for tag ${{ steps.tag.outputs.tag }}"
+          git push origin temp:temp
