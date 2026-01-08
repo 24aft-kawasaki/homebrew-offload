@@ -76,11 +76,6 @@ fpath=(/workspaces/homebrew-offload/comp $fpath)
 
 source $ZSH/oh-my-zsh.sh
 
-autoload -Uz compinit && compinit -i
-
-autoload -Uz _brew-offload
-compdef _brew-offload brew-offload
-
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"

@@ -1,10 +1,14 @@
 # zshとzsh-completionsはイメージにプリインストールされている
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
+
+ln -s /workspaces/homebrew-offload/comp/.zshrc  ~/.zshrc
+
 fpath=( /workspaces/homebrew-offload $fpath )
-rm ~/.zcompdump*
+rm ~/.zcompdump* # 補完のキャッシュの削除
 
 # zshの補完で使うためには、ディレクトリ(親以上も含む)と関数定義ファイルのパーミッションが、自分以外に書き込み権限がないようにしなければ、compinit時点でfpathから削除されてしまう
 chmod 755 /workspaces /workspaces/homebrew-offload /workspaces/homebrew-offload/comp
+chmod 644 /workspaces/homebrew-offload/comp/.zshrc
 
 TAP=24aft-kawasaki/homebrew-offload
 
