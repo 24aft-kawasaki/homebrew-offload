@@ -1,0 +1,61 @@
+#compdef brew-offload
+
+_brew-offload() {
+    local context state line
+    typeset -A opt_args
+
+    _arguments -C \
+        '(-h --help)'{-h,--help}'[display help information]' \
+        '1: :->subcommand' \
+        '*: :->args'
+    
+    case $state in
+        subcommand)
+            local -a subcmds
+            subcmds=(
+                'add:adding'
+                'remove:removing'
+                'config:config'
+            )
+            _describe -t commands 'subcommands' subcmds
+            ;;
+    esac
+}
+
+# _brew-offload "$@"
+
+_mycmd() {
+    local context state line
+    typeset -A opt_args
+
+    _arguments -C \
+        '(-h --help)'{-h,--help}'[ヘルプを表示]' \
+        '--version[バージョンを表示]' \
+        '--config[設定ファイルを指定]:config file:_files' \
+        '--mode[動作モードを選択]:mode:(fast slow normal)' \
+        '1: :->command' \
+        '*: :->args'
+
+    case $state in
+        command)
+            local -a subcmds
+            subcmds=(
+                'install:パッケージをインストール'
+                'search:パッケージを検索'
+            )
+            _describe -t commands 'subcommands' subcmds
+            ;;
+        args)
+            case $line[1] in
+                install)
+                    _arguments '*:package name:_path_files'
+                    ;;
+                search)
+                    _arguments '--deep[深層検索]'
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+: _mycmd "$@"
