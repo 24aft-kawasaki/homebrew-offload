@@ -1,6 +1,7 @@
 # zshとzsh-completionsはイメージにプリインストールされている
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
 
+rm ~/.zshrc
 ln -s /workspaces/homebrew-offload/comp/.zshrc  ~/.zshrc
 
 fpath=( /workspaces/homebrew-offload $fpath )
