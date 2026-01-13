@@ -19,6 +19,27 @@ _brew-offload() {
             )
             _describe -t commands 'subcommands' subcmds
             ;;
+        args)
+            case $line[1] in
+                add)
+                    local -a formulae
+                    formulae=()
+                    compadd -a formulae
+                    ;;
+                remove)
+                    local -a formulae
+                    formulae=()
+                    compadd -a formulae
+                    ;;
+                config)
+                    local -a keys
+                    keys=(
+                        'offload_cellar:the path to the offload cellar'
+                    )
+                    _describe -t keys 'keys' keys
+                    ;;
+            esac
+            ;;
     esac
 }
 
