@@ -7,8 +7,7 @@ fpath=( /workspaces/homebrew-offload/comp $fpath )
 rm ~/.zcompdump* # 補完のキャッシュの削除
 
 # zshの補完で使うためには、ディレクトリ(親以上も含む)と関数定義ファイルのパーミッションが、自分以外に書き込み権限がないようにしなければ、compinit時点でfpathから削除されてしまう
-chmod 755 /workspaces /workspaces/homebrew-offload /workspaces/homebrew-offload/comp
-chmod 644 /workspaces/homebrew-offload/comp/.zshrc
+bash -c 'comp=/workspaces/homebrew-offload/comp/.zshrc; IFS="/"; current=""; for p in ${comp#/}; do current="$current/$p"; echo "$current"; done | xargs chmod go-w'
 
 TAP=24aft-kawasaki/homebrew-offload
 
