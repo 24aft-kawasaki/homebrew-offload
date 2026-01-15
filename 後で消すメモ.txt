@@ -1,13 +1,13 @@
 # zshとzsh-completionsはイメージにプリインストールされている
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
 
-git merge-file -p ~/.zshrc /workspaces/homebrew-offload/comp/.zshrcbase /workspaces/homebrew-offload/comp/.zshrc > /dev/null || (echo "Merge conflict between ~/.zshrc and /workspaces/homebrew-offload/comp/.zshrc" 1>&2 && exit 1) && git merge-file ~/.zshrc /workspaces/homebrew-offload/comp/.zshrcbase /workspaces/homebrew-offload/comp/.zshrc
+git merge-file -p ~/.zshrc /workspaces/homebrew-offload/completion/.zshrcbase /workspaces/homebrew-offload/completion/.zshrc > /dev/null || (echo "Merge conflict between ~/.zshrc and /workspaces/homebrew-offload/completion/.zshrc" 1>&2 && exit 1) && git merge-file ~/.zshrc /workspaces/homebrew-offload/completion/.zshrcbase /workspaces/homebrew-offload/completion/.zshrc
 
 fpath=( /workspaces/homebrew-offload/comp $fpath )
 rm ~/.zcompdump* # 補完のキャッシュの削除
 
 # zshの補完で使うためには、ディレクトリ(親以上も含む)と関数定義ファイルのパーミッションが、自分以外に書き込み権限がないようにしなければ、compinit時点でfpathから削除されてしまう
-bash -c 'comp=/workspaces/homebrew-offload/comp/.zshrc; IFS="/"; current=""; for p in ${comp#/}; do current="$current/$p"; echo "$current"; done | xargs chmod go-w'
+bash -c 'comp=/workspaces/homebrew-offload/completion/.zshrc; IFS="/"; current=""; for p in ${comp#/}; do current="$current/$p"; echo "$current"; done | xargs chmod go-w'
 
 TAP=24aft-kawasaki/homebrew-offload
 

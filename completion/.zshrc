@@ -72,7 +72,7 @@ ZSH_THEME="devcontainers"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git)
 
-fpath=(/workspaces/homebrew-offload/comp $fpath)
+fpath=(/workspaces/homebrew-offload/completion $fpath)
 
 source $ZSH/oh-my-zsh.sh
 
