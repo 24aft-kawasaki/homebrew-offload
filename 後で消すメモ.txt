@@ -1,7 +1,7 @@
 # zshとzsh-completionsはイメージにプリインストールされている
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
 
-git merge-file -p ~/.zshrc ~/.zshrc /workspaces/homebrew-offload/comp/.zshrc > /dev/null || (echo "Merge conflict between ~/.zshrc and /workspaces/homebrew-offload/comp/.zshrc" 1>&2 && exit 1) && git merge-file ~/.zshrc ~/.zshrc /workspaces/homebrew-offload/comp/.zshrc
+git merge-file -p ~/.zshrc /workspaces/homebrew-offload/comp/.zshrcbase /workspaces/homebrew-offload/comp/.zshrc > /dev/null || (echo "Merge conflict between ~/.zshrc and /workspaces/homebrew-offload/comp/.zshrc" 1>&2 && exit 1) && git merge-file ~/.zshrc /workspaces/homebrew-offload/comp/.zshrcbase /workspaces/homebrew-offload/comp/.zshrc
 
 fpath=( /workspaces/homebrew-offload/comp $fpath )
 rm ~/.zcompdump* # 補完のキャッシュの削除
