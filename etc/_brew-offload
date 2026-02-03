@@ -47,7 +47,7 @@ _brew-offload() {
                 config)
                     case $line[2] in
                         offload_cellar)
-                            _files -fg '*.json'
+                            _files -/
                             ;;
                     esac
                     ;;
