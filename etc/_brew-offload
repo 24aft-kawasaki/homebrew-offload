@@ -14,9 +14,9 @@ _brew-offload() {
         subcommand)
             local -a subcmds
             subcmds=(
-                'add:adding'
-                'remove:removing'
-                'config:config'
+                'add:Add a formula to the offload list (move it to the offload cellar and create a symlink)'
+                'remove:Remove a formula from the offload list (restore it from the offload cellar back to the Homebrew cellar)'
+                'config:Manage brew-offload settings (e.g. set `offload_cellar` path)'
             )
             _describe -t commands 'subcommands' subcmds
             ;;
@@ -35,7 +35,7 @@ _brew-offload() {
                 config)
                     local -a keys
                     keys=(
-                        'offload_cellar:the path to the offload cellar'
+                        'offload_cellar:The absolute path to the directory where offloaded formulae are stored'
                         # add other keys
                     )
                     _describe -t keys 'keys' keys
@@ -47,7 +47,7 @@ _brew-offload() {
                 config)
                     case $line[2] in
                         offload_cellar)
-                            _files -fg '*.json'
+                            _files -/
                             ;;
                     esac
                     ;;
