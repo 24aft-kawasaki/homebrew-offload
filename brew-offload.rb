@@ -12,6 +12,7 @@ class BrewOffload < Formula
     etc.install "testenv/etc/brew-offload"
     etc.install "etc/brew-wrap"
     zsh_completion.install "etc/_brew-offload"
+    zsh_completion.install "etc/_brew_offload"
   end
 
   test do
