@@ -23,4 +23,7 @@ HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --verbose --debu
 brew tap 24aft-kawasaki/homebrew-offload
 brew install 24aft-kawasaki/homebrew-offload/brew-offload
 
+# matrixを並列実行する場合
 act push -e .github/events/push-with-tag.json
+# matrixを一つだけ指定する場合(--matrixの引数には''を付ける必要あり)
+act push -e .github/events/push-with-tag.json --matrix 'python-version:3.9'
