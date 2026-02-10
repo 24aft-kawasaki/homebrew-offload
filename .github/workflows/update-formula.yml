@@ -95,7 +95,7 @@ jobs:
           URL="${{ needs.prepare.outputs.url }}"
           SHA="${{ needs.prepare.outputs.sha }}"
 
-          sed -i "s|url    \".*\"|url    \"$URL\"|" "$FORMULA"
+          sed -i "s|url \".*\"|url \"$URL\"|"       "$FORMULA"
           sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$FORMULA"
 
       - name: Commit & push changes
