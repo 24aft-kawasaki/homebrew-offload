@@ -1,5 +1,7 @@
 FROM homebrew/brew:latest
 
+ARG PYTHON_VERSION
+
 ENV HOME=/home/linuxbrew
 ENV HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
 
@@ -7,7 +9,7 @@ WORKDIR $HOME/testenv/
 
 ENV PATH="$PATH:/home/linuxbrew/.local/bin:$HOME/testenv/bin"
 
-RUN brew install python@3.13 python@3.12 pipx \
+RUN brew install python@${PYTHON_VERSION} python@3.12 pipx \
     && pipx install pipenv \
     && mkdir ~/.offload
 

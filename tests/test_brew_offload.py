@@ -3,6 +3,7 @@ import unittest
 import subprocess
 import os
 from pathlib import Path
+from sys import version_info
 
 from python_on_whales import DockerClient
 
@@ -14,7 +15,8 @@ class Docker:
 
     @staticmethod
     def build():
-        Docker.client.compose.build(cache=False)
+        build_args = {"PYTHON_VERSION": f"{version_info[0]}.{version_info[1]}"}
+        Docker.client.compose.build(build_args=build_args, cache=False)
     
     @staticmethod
     def with_docker(func):

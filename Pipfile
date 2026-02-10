@@ -9,8 +9,11 @@ name = "pypi"
 python-on-whales = "~=0.78.0"
 
 [requires]
-python_version = "3.13"
-python_full_version = "3.13"
+# Support Python 3.9, 3.10, 3.11, 3.12, 3.13 and 3.14
+# Pipenv will match the current installed Python version
+python_version = "3"
+# Minimum required version: 3.9
+# This is enforced at runtime in bin/brew-offload
 
 [scripts]
 # execute before test `pipenv sync --dev`
