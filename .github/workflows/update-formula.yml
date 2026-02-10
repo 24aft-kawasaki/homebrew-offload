@@ -14,7 +14,7 @@ jobs:
       sha: ${{ steps.sha.outputs.sha }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: temp
@@ -51,7 +51,7 @@ jobs:
         python-version: ["3.9", "3.13"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: temp
@@ -78,11 +78,13 @@ jobs:
 
   commit:
     needs: [prepare, tests]
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     if: ${{ needs.tests.result == 'success' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: temp
@@ -93,12 +95,12 @@ jobs:
           URL="${{ needs.prepare.outputs.url }}"
           SHA="${{ needs.prepare.outputs.sha }}"
 
-          sed -i "s|url \".*\"|url \"$URL\"|" "$FORMULA"
+          sed -i "s|url    \".*\"|url    \"$URL\"|" "$FORMULA"
           sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$FORMULA"
 
       - name: Commit & push changes
         run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add brew-offload.rb
