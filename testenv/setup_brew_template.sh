@@ -5,12 +5,13 @@ set -euo pipefail
 # This runs once per CI workflow or locally on first test
 # Creates the minimal Homebrew directory structure needed for testing
 
-BREW_TEMPLATE_DIR="$BREW_TEMPLATE_DIR"
-HOMEBREW_REPO="$HOMEBREW_REPO"
-TEST_TARGET_FORMULAE=("${TEST_TARGET_FORMULAE[@]}")
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 . "$SCRIPT_DIR/.env.test"
+
+BREW_TEMPLATE_DIR="$BREW_TEMPLATE_DIR"
+PATH="$PATH"
+HOMEBREW_REPO="$HOMEBREW_REPO"
+TEST_TARGET_FORMULAE=("${TEST_TARGET_FORMULAE[@]}")
 
 echo "Setting up Homebrew template at: $BREW_TEMPLATE_DIR"
 
