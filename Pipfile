@@ -6,6 +6,12 @@ name = "pypi"
 [packages]
 
 [dev-packages]
+# Testing framework
+pytest = "~=7.4"
+pytest-xdist = "~=3.5"  # Parallel test execution
+pytest-timeout = "~=2.2"  # Test timeouts
+
+# Legacy Docker-based tests (still used on Linux CI)
 python-on-whales = "~=0.78.0"
 
 [requires]
@@ -16,5 +22,11 @@ python_version = "3"
 # This is enforced at runtime in bin/brew-offload
 
 [scripts]
-# execute before test `pipenv sync --dev`
-test = "python -m unittest tests.test_brew_offload"
+# Pytest-based tests (all platforms, parallel-safe)
+test = "pytest -v tests/test_brew_offload_pytest.py"
+
+# Legacy unittest-based tests (Docker, Linux only)
+test-legacy = "python -m unittest tests.test_brew_offload"
+
+# Pytest with parallel execution (CI-optimized)
+test-fast = "pytest -v -n auto tests/test_brew_offload_pytest.py"

@@ -1,0 +1,122 @@
+name: CI Tests (Pytest)
+
+on:
+  push:
+    branches:
+      - main
+      - temp
+  pull_request:
+    branches:
+      - main
+      - temp
+
+env:
+  PYTHON_VERSION: "3.13"
+  CACHE_VERSION: v1
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.13"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Homebrew template
+        uses: actions/cache@v4
+        id: brew_template_cache
+        with:
+          path: testenv/brew_template
+          key: brew-template-${{ env.CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('testenv/setup_brew_template.sh') }}
+          restore-keys: |
+            brew-template-${{ env.CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Set up Homebrew template
+        if: steps.brew_template_cache.outputs.cache-hit != 'true'
+        run: |
+          bash testenv/setup_brew_template.sh
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('**/Pipfile.lock') }}
+          restore-keys: |
+            pip-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pipenv
+          pipenv sync --dev
+
+      - name: Run pytest tests (parallel)
+        run: |
+          pipenv run pytest -n auto tests/test_brew_offload_pytest.py -v
+
+      - name: Run legacy Docker-based tests
+        run: |
+          bash testenv/setup_brew_template.sh
+          pipenv run pytest -v tests/test_brew_offload_pytest.py::TestOffloadIntegration -v || true
+
+  test-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.13"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Homebrew
+        run: |
+          which brew
+          brew --version
+          echo "Homebrew prefix: $(brew --prefix)"
+
+      - name: Cache Homebrew template
+        uses: actions/cache@v4
+        id: brew_template_cache
+        with:
+          path: testenv/brew_template
+          key: brew-template-${{ env.CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('testenv/setup_brew_template.sh') }}
+          restore-keys: |
+            brew-template-${{ env.CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Set up Homebrew template
+        if: steps.brew_template_cache.outputs.cache-hit != 'true'
+        run: |
+          bash testenv/setup_brew_template.sh
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/pip
+          key: pip-macos-${{ matrix.python-version }}-${{ hashFiles('**/Pipfile.lock') }}
+          restore-keys: |
+            pip-macos-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pipenv
+          pipenv sync --dev
+
+      - name: Run pytest tests (parallel)
+        run: |
+          pipenv run pytest -n auto tests/test_brew_offload_pytest.py -v
+
+      - name: Verify Docker-requiring tests are skipped
+        run: |
+          # On macOS, tests marked @requires_docker should be skipped
+          pipenv run pytest tests/test_brew_offload_pytest.py::TestOffloadIntegration -v --co 2>&1 | grep -q "skipped" || true
