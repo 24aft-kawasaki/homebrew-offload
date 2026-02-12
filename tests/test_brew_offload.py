@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from sys import version_info
 
+from dotenv import load_dotenv
 from python_on_whales import DockerClient
 
 from . import brew_offload
@@ -15,6 +16,10 @@ class Docker:
 
     @staticmethod
     def build():
+        subprocess.run(
+            "./testenv/setup_brew_template.sh && brew --version && which brew",
+            shell=True, check=True, text=True, executable="/bin/bash", timeout=600
+        )
         build_args = {"PYTHON_VERSION": f"{version_info[0]}.{version_info[1]}"}
         Docker.client.compose.build(build_args=build_args, cache=False)
     
@@ -34,12 +39,8 @@ class Docker:
 
 class BrewOffloadTestCase(unittest.TestCase):
     @classmethod
-    def setUpClass(cls):    
-        path = os.environ["PATH"]
-        brew_path = Path("/home/linuxbrew/.linuxbrew/bin")
-        brew_offload_path = Path("./bin")
-        path = ":".join((str(brew_offload_path.absolute()), str(brew_path.absolute()), path))
-        os.environ["PATH"] = path
+    def setUpClass(cls):
+        load_dotenv("./testenv/.env.test", override=True)
         Docker.build()
 
     def test_brew_is_wrapped(self):
