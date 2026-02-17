@@ -6,6 +6,7 @@ class BrewOffload < Formula
   license ""
 
   # Uses system Python 3.13+ - version check is performed at runtime
+  skip_build!
 
   def install
     bin.install "bin/brew-offload"
