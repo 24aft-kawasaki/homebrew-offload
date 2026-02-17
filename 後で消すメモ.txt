@@ -27,3 +27,21 @@ brew install 24aft-kawasaki/homebrew-offload/brew-offload
 act push -e .github/events/push-with-tag.json
 # matrixを一つだけ指定する場合(--matrixの引数には''を付ける必要あり)
 act push -e .github/events/push-with-tag.json --matrix 'python-version:3.9'
+
+tar czvf /tmp/brew-offload.tar.gz -C /workspaces/ homebrew-offload
+sha256sum /tmp/brew-offload.tar.gz
+
+apt-get update
+
+brew install gcc
+
+brew tap-new user/repo
+brew create file:///tmp/brew-offload.tar.gz --tap=user/repo --set-name=brew-offload --set-version=test
+
+TAP=$(brew --repository user/repo)
+rm -rf $TAP/*
+cp brew-offload.rb $TAP
+
+brew audit --strict brew-offload
+
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose brew-offload
