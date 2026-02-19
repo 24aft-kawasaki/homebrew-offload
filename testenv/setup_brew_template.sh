@@ -33,4 +33,23 @@ for formula in "${TEST_TARGET_FORMULAE[@]}"; do
     $formula --version
 done
 
+function install_brew-offload() {
+    echo "Installing brew-offload into brew template..."
+    which brew
+    local TEST_VERSION=0.0.1
+    tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C $SCRIPT_DIR/../../ homebrew-offload
+    local SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
+    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
+    brew tap-new user/repo
+    brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
+    local TAP=$(brew --repository user/repo)
+    rm -rf $TAP/*
+    cp -R $SCRIPT_DIR/../* $TAP
+    chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
+    brew audit --strict brew-offload
+    HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose --formula --debug $TAP/brew-offload.rb
+}
+
+install_brew-offload
+
 echo "Homebrew template setup complete."

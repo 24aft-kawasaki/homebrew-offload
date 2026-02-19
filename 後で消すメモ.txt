@@ -46,3 +46,4 @@ chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
 brew audit --strict brew-offload
 
 HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose --formula --debug $TAP/brew-offload.rb
+# HOMEBREW_DEVELOPER=1 を付けるとcoreのtapをスキップできるかも
