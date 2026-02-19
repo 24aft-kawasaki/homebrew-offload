@@ -31,17 +31,23 @@ act push -e .github/events/push-with-tag.json --matrix 'python-version:3.9'
 tar czvf /tmp/brew-offload.tar.gz -C /workspaces/ homebrew-offload
 sha256sum /tmp/brew-offload.tar.gz
 
-apt-get update
+sudo apt-get update
+sudo apt-get upgrade
+
+brew update
+brew upgrade
 
 brew install gcc
 
 brew tap-new user/repo
-brew create file:///tmp/brew-offload.tar.gz --tap=user/repo --set-name=brew-offload --set-version=test
+brew create file:///tmp/brew-offload.tar.gz --tap=user/repo --set-name=brew-offload --set-version=0.0.1
 
 TAP=$(brew --repository user/repo)
 rm -rf $TAP/*
-cp brew-offload.rb $TAP
+cp -R . $TAP
 
 brew audit --strict brew-offload
 
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose brew-offload
+chmod +t /tmp/brew_template/brew/Library/Homebrew/vendor/bundle/ruby/3.4.0/gems
+
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose --formula --debug $TAP/brew-offload.rb
