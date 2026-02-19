@@ -28,7 +28,8 @@ class ConfigDecodeError(json.JSONDecodeError):
     pass
 
 class BrewOffload:
-    DEFAULT_TARGET_PATH = Path.home() / ".offload"
+    # initialized outside of class definition, because it needs brew prefix path.
+    DEFAULT_TARGET_PATH = Path("placeholder")
 
     def __init__(self, args: list[str]) -> None:
         self.log = logging.getLogger(__name__)
@@ -145,12 +146,16 @@ class BrewOffload:
             config["offload_cellar"] = str(new_offload_cellar)
             self.target_path = new_offload_cellar
             self.dump_config(config)
-        
+            if old_offload_cellar == self.DEFAULT_TARGET_PATH:
+                return 0
             self.mv_offload_cellar(new_offload_cellar, old_offload_cellar)
         return 0
 
     def sync(self) -> int:
         config = self.load_config()
+
+        if Path(config["offload_cellar"]) == self.DEFAULT_TARGET_PATH:
+            return 0
 
         # offloading
         for target_formula in config["offloaded_formulae"]:
@@ -204,7 +209,8 @@ class BrewOffload:
 
         return completedProcess.returncode
 
-        
+# initialized outside of class definition, because it needs brew prefix path.
+BrewOffload.DEFAULT_TARGET_PATH = BrewOffload.get_brew_cellar_path()    
 
 def arg_parse(*args: str) -> argparse.Namespace:
     if args[1:] and args[1] == "wrapped":

@@ -28,26 +28,21 @@ act push -e .github/events/push-with-tag.json
 # matrixを一つだけ指定する場合(--matrixの引数には''を付ける必要あり)
 act push -e .github/events/push-with-tag.json --matrix 'python-version:3.9'
 
-tar czvf /tmp/brew-offload.tar.gz -C /workspaces/ homebrew-offload
-sha256sum /tmp/brew-offload.tar.gz
 
-sudo apt-get update
-sudo apt-get upgrade
-
-brew update
-brew upgrade
-
-brew install gcc
+TEST_VERSION=0.0.1
+tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C ../ homebrew-offload
+SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
+sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
 
 brew tap-new user/repo
-brew create file:///tmp/brew-offload.tar.gz --tap=user/repo --set-name=brew-offload --set-version=0.0.1
+brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
 
 TAP=$(brew --repository user/repo)
 rm -rf $TAP/*
 cp -R . $TAP
 
-brew audit --strict brew-offload
+chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
 
-chmod +t /tmp/brew_template/brew/Library/Homebrew/vendor/bundle/ruby/3.4.0/gems
+brew audit --strict brew-offload
 
 HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose --formula --debug $TAP/brew-offload.rb
