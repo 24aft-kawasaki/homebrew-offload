@@ -85,7 +85,9 @@ class BrewOffloadTestCase(unittest.TestCase):
     @Docker.with_docker
     def test_offload_function(self, docker_client: Docker.DockerClient):
         target_formula = "python@3.12"
+        offload_cellar = "/home/linuxbrew/.offload"
         # to capture stdout and stderr, tty must be False
+        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", target_formula], tty=False)
         brew_prefix = docker_client.compose.execute("test", ["brew", "--prefix"], tty=False)
         python_version = docker_client.compose.execute("test", [f"{brew_prefix}/opt/{target_formula}/bin/python3.12", "--version"], tty=False)
@@ -97,6 +99,9 @@ class BrewOffloadTestCase(unittest.TestCase):
     @Docker.with_docker
     def test_add_offloaded_formula(self, docker_client: Docker.DockerClient):
         target_formula = "python@3.12"
+        offload_cellar = "/home/linuxbrew/.offload"
+        # to capture stdout and stderr, tty must be False
+        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", target_formula], tty=False)
         stdout = docker_client.compose.execute("test", ["bash", "-c", f"brew-offload add {target_formula}; echo $?"], tty=False)
         return_code = int(str(stdout).splitlines()[-1])
@@ -126,6 +131,8 @@ class BrewOffloadTestCase(unittest.TestCase):
 
     @Docker.with_docker
     def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
+        offload_cellar = "/home/linuxbrew/.offload"
+        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
         docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
         docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
 

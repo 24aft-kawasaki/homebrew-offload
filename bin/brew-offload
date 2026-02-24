@@ -94,16 +94,18 @@ class BrewOffload:
     def init_config_file(self) -> int:
         if not self.config_path.exists(follow_symlinks=True):
             self.config_path.touch()
-        config: Config = {
-            "offload_cellar": str(self.DEFAULT_TARGET_PATH),
+        initial_config: Config = {
+            "offload_cellar"    : str(self.DEFAULT_TARGET_PATH),
             "offloaded_formulae": []
         }
         try:
             config = self.load_config()
-            if "offloaded_formulae" in config:
-                return 0
+            if not "offload_cellar"     in config:
+                config["offload_cellar"]     = initial_config["offload_cellar"]
+            if not "offloaded_formulae" in config:
+                config["offloaded_formulae"] = initial_config["offloaded_formulae"]
         except ConfigDecodeError:
-            pass
+            config = initial_config
         self.dump_config(config)
         return 0
 
