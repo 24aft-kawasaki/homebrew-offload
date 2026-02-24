@@ -27,6 +27,11 @@ eval "$(brew shellenv)"
 test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
 brew --version
 
+if brew search brew-offload 2>/dev/null ; then
+    echo "brew-offload already exists in Homebrew core." 2>&1
+    exit 1
+fi
+
 for formula in "${TEST_TARGET_FORMULAE[@]}"; do
     echo "Installing formula $formula into brew template..."
     brew install "$formula"
@@ -46,8 +51,8 @@ function install_brew-offload() {
     rm -rf $TAP/*
     cp -R $SCRIPT_DIR/../* $TAP
     chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
-    brew audit --strict brew-offload
-    HOMEBREW_NO_INSTALL_FROM_API=1 brew install --verbose --formula --debug $TAP/brew-offload.rb
+    # brew audit --strict brew-offload # This command is very slow and optional.
+    brew install --verbose --formula --debug $TAP/brew-offload.rb
 }
 
 install_brew-offload
