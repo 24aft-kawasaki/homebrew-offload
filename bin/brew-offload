@@ -136,6 +136,8 @@ class BrewOffload:
         if self.args.key == "offload_cellar":
             new_offload_cellar = Path(self.args.value)
             old_offload_cellar = self.target_path
+
+            # Validation
             if not new_offload_cellar.absolute():
                 self.log.error("Offload cellar path must be absolute.")
                 return 1
@@ -143,6 +145,13 @@ class BrewOffload:
             if not new_offload_cellar.exists():
                 self.log.error("Offload cellar path does not exist.")
                 return 1
+            if not new_offload_cellar.is_dir():
+                self.log.error("Offload cellar path must be a directory.")
+                return 1
+            if any(new_offload_cellar.iterdir()):
+                self.log.error("Offload cellar must be empty.")
+                return 1
+
             config["offload_cellar"] = str(new_offload_cellar)
             self.target_path = new_offload_cellar
             self.dump_config(config)
