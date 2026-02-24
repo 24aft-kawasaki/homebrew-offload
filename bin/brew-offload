@@ -28,7 +28,8 @@ class ConfigDecodeError(json.JSONDecodeError):
     pass
 
 class BrewOffload:
-    DEFAULT_TARGET_PATH = Path.home() / ".offload"
+    # initialized outside of class definition, because it needs brew prefix path.
+    DEFAULT_TARGET_PATH = Path("placeholder")
 
     def __init__(self, args: list[str]) -> None:
         self.log = logging.getLogger(__name__)
@@ -93,16 +94,18 @@ class BrewOffload:
     def init_config_file(self) -> int:
         if not self.config_path.exists(follow_symlinks=True):
             self.config_path.touch()
-        config: Config = {
-            "offload_cellar": str(self.DEFAULT_TARGET_PATH),
+        initial_config: Config = {
+            "offload_cellar"    : str(self.DEFAULT_TARGET_PATH),
             "offloaded_formulae": []
         }
         try:
             config = self.load_config()
-            if "offloaded_formulae" in config:
-                return 0
+            if not "offload_cellar"     in config:
+                config["offload_cellar"]     = initial_config["offload_cellar"]
+            if not "offloaded_formulae" in config:
+                config["offloaded_formulae"] = initial_config["offloaded_formulae"]
         except ConfigDecodeError:
-            pass
+            config = initial_config
         self.dump_config(config)
         return 0
 
@@ -135,6 +138,8 @@ class BrewOffload:
         if self.args.key == "offload_cellar":
             new_offload_cellar = Path(self.args.value)
             old_offload_cellar = self.target_path
+
+            # Validation
             if not new_offload_cellar.absolute():
                 self.log.error("Offload cellar path must be absolute.")
                 return 1
@@ -142,15 +147,26 @@ class BrewOffload:
             if not new_offload_cellar.exists():
                 self.log.error("Offload cellar path does not exist.")
                 return 1
+            if not new_offload_cellar.is_dir():
+                self.log.error("Offload cellar path must be a directory.")
+                return 1
+            if any(new_offload_cellar.iterdir()):
+                self.log.error("Offload cellar must be empty.")
+                return 1
+
             config["offload_cellar"] = str(new_offload_cellar)
             self.target_path = new_offload_cellar
             self.dump_config(config)
-        
+            if old_offload_cellar == self.DEFAULT_TARGET_PATH:
+                return 0
             self.mv_offload_cellar(new_offload_cellar, old_offload_cellar)
         return 0
 
     def sync(self) -> int:
         config = self.load_config()
+
+        if Path(config["offload_cellar"]) == self.DEFAULT_TARGET_PATH:
+            return 0
 
         # offloading
         for target_formula in config["offloaded_formulae"]:
@@ -204,7 +220,8 @@ class BrewOffload:
 
         return completedProcess.returncode
 
-        
+# initialized outside of class definition, because it needs brew prefix path.
+BrewOffload.DEFAULT_TARGET_PATH = BrewOffload.get_brew_cellar_path()    
 
 def arg_parse(*args: str) -> argparse.Namespace:
     if args[1:] and args[1] == "wrapped":
