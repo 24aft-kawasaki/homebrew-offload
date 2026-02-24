@@ -10,7 +10,7 @@ class BrewOffload < Formula
   def install
     bin.install "bin/brew-offload"
     etc.install "testenv/etc/brew-offload"
-    etc.install "etc/brew-wrap"
+    (etc/"brew-offload").install "etc/brew-wrap"
     zsh_completion.install "etc/_brew-offload"
     zsh_completion.install "etc/_brew_offload"
   end

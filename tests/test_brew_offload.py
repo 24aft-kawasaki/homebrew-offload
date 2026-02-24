@@ -1,6 +1,7 @@
 import functools
 import unittest
 import subprocess
+import sys
 import os
 from pathlib import Path
 from sys import version_info
@@ -11,41 +12,50 @@ from python_on_whales import DockerClient
 from . import brew_offload
 
 class Docker:
-    DockerClient = DockerClient
     client = DockerClient(compose_files=["testenv/compose.yml"])
+    BREW_TEMPLATE_DIR = Path("placeholder")
+    class TestEnv:
+        def __init__(self, func_name: str):
+            self.brew_directory = Path(f"/tmp/brew_{func_name}")
+            self.env = os.environ.copy()
+            # TODO : set path to temp brew directory, not to the template directory
 
-    @staticmethod
-    def build():
+        def execute(self, command: str | list[str]) -> str:
+            result = subprocess.run(command, capture_output=True, text=True, executable="/bin/bash", timeout=60)
+            return result.stdout
+
+    @classmethod
+    def build(cls):
+        load_dotenv("./testenv/.env.test", override=True)
+        brew_template_dir = os.getenv("BREW_TEMPLATE_DIR")
+        if brew_template_dir is None:
+            raise EnvironmentError("BREW_TEMPLATE_DIR environment variable is not set. Please set it in testenv/.env.test")
+        cls.BREW_TEMPLATE_DIR = Path(brew_template_dir)
         subprocess.run(
             "./testenv/setup_brew_template.sh && brew --version && which brew",
             shell=True, check=True, text=True, executable="/bin/bash", timeout=600
         )
         build_args = {"PYTHON_VERSION": f"{version_info[0]}.{version_info[1]}"}
-        Docker.client.compose.build(build_args=build_args, cache=False)
     
-    @staticmethod
-    def with_docker(func):
+    @classmethod
+    def with_docker(cls, func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            try:
-                docker_client = Docker.client
-                docker_client.compose.up(detach=True) # detach=True for watch command
-                ret = func(docker_client=docker_client, *args, **kwargs)
-            finally:
-                docker_client.compose.down()
-            return ret
+            brew_directory = Path(f"/tmp/brew_{func.__name__}")
+            cls.BREW_TEMPLATE_DIR.copy(brew_directory)
+            return func(test_env=cls.TestEnv(func.__name__), *args, **kwargs)
         return wrapper
 
 
 class BrewOffloadTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        load_dotenv("./testenv/.env.test", override=True)
         Docker.build()
 
     def test_brew_is_wrapped(self):
+        wrapper = Docker.BREW_TEMPLATE_DIR / "brew/etc/brew-offload/brew-wrap"
         result = subprocess.run(
-            "source etc/brew-wrap; brew --version",
+            f"source {wrapper}; brew --version",
             shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
         )
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
@@ -83,18 +93,16 @@ class BrewOffloadTestCase(unittest.TestCase):
             self.assertNotEqual(returncode, 0)
 
     @Docker.with_docker
-    def test_offload_function(self, docker_client: Docker.DockerClient):
-        target_formula = "python@3.12"
-        offload_cellar = "/home/linuxbrew/.offload"
-        # to capture stdout and stderr, tty must be False
-        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
-        docker_client.compose.execute("test", ["brew-offload", "add", target_formula], tty=False)
-        brew_prefix = docker_client.compose.execute("test", ["brew", "--prefix"], tty=False)
-        python_version = docker_client.compose.execute("test", [f"{brew_prefix}/opt/{target_formula}/bin/python3.12", "--version"], tty=False)
-        self.assertListEqual(str(python_version).split(".")[:2], ["Python 3", "12"])
-        is_symlink = docker_client.compose.execute("test", ["test", "-L", f"{brew_prefix}/Cellar/{target_formula}"], tty=False)
-        # If execute brew doctor, occurs warning for Homebrew maintainers with non-zero return code.
-        # docker_client.compose.execute("test", ["brew", "doctor"], tty=False)
+    def test_offload_function(self, test_env: Docker.TestEnv):
+        target_formula = "jq"
+        offload_cellar = test_env.brew_directory / "offload"
+        test_env.execute(["brew-offload", "config", "offload_cellar", str(offload_cellar)])
+        test_env.execute(["brew-offload", "add", target_formula])
+        brew_prefix = test_env.execute(["brew", "--prefix"]).strip()
+        python_version = test_env.execute(["bash", "-c", f"{brew_prefix}/opt/{target_formula}/bin/{target_formula} --version > /dev/null; echo $?"])
+        self.assertEqual(int(python_version.strip()), 0)
+        is_symlink = test_env.execute(["bash", "-c", f"test -L {brew_prefix}/Cellar/{target_formula}; echo $?"])
+        self.assertEqual(is_symlink.strip(), "0")
 
     @Docker.with_docker
     def test_add_offloaded_formula(self, docker_client: Docker.DockerClient):
