@@ -1,7 +1,6 @@
 import functools
 import unittest
 import subprocess
-import sys
 import os
 from pathlib import Path
 from sys import version_info
@@ -18,19 +17,25 @@ class Docker:
         def __init__(self, func_name: str):
             self.brew_directory = Path(f"/tmp/brew_{func_name}")
             self.env = os.environ.copy()
-            # TODO : set path to temp brew directory, not to the template directory
+            self.env["PATH"] = f"{self.brew_directory}/brew/bin:{self.env['PATH']}"
 
-        def execute(self, command: str | list[str]) -> str:
-            result = subprocess.run(command, capture_output=True, text=True, executable="/bin/bash", timeout=60)
+        def execute(self, command: str | list[str], shell: bool=False, *, check: bool=False) -> str:
+            # どちらの型でもシェルを使うので、リストを文字列に変換
+            if isinstance(command, list) and shell:
+                command = " ".join(str(arg) for arg in command)
+            result = subprocess.run(command, shell=shell, env=self.env, capture_output=True, check=check, text=True, executable="/bin/bash", timeout=60)
             return result.stdout
 
     @classmethod
-    def build(cls):
+    def build(cls, cache=False):
         load_dotenv("./testenv/.env.test", override=True)
         brew_template_dir = os.getenv("BREW_TEMPLATE_DIR")
         if brew_template_dir is None:
             raise EnvironmentError("BREW_TEMPLATE_DIR environment variable is not set. Please set it in testenv/.env.test")
         cls.BREW_TEMPLATE_DIR = Path(brew_template_dir)
+        if cache:
+            print("Using cached brew template directory, skipping setup script")
+            return
         subprocess.run(
             "./testenv/setup_brew_template.sh && brew --version && which brew",
             shell=True, check=True, text=True, executable="/bin/bash", timeout=600
@@ -42,7 +47,7 @@ class Docker:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             brew_directory = Path(f"/tmp/brew_{func.__name__}")
-            cls.BREW_TEMPLATE_DIR.copy(brew_directory)
+            cls.BREW_TEMPLATE_DIR.copy(brew_directory, preserve_metadata=True)
             return func(test_env=cls.TestEnv(func.__name__), *args, **kwargs)
         return wrapper
 
@@ -96,9 +101,17 @@ class BrewOffloadTestCase(unittest.TestCase):
     def test_offload_function(self, test_env: Docker.TestEnv):
         target_formula = "jq"
         offload_cellar = test_env.brew_directory / "offload"
-        test_env.execute(["brew-offload", "config", "offload_cellar", str(offload_cellar)])
-        test_env.execute(["brew-offload", "add", target_formula])
-        brew_prefix = test_env.execute(["brew", "--prefix"]).strip()
+        # make sure offload cellar exists so config command succeeds
+        offload_cellar.mkdir(parents=True, exist_ok=True)
+        path = test_env.execute("echo $PATH", shell=True, check=True)
+        print(f"PATH: {path}")
+        which_brew_offload = test_env.execute("which brew-offload", shell=True)
+        self.assertEqual(which_brew_offload.strip(), f"{test_env.brew_directory}/brew/bin/brew-offload")
+        print(f"which brew-offload: {which_brew_offload}")
+        test_env.execute(f"brew-offload config offload_cellar {offload_cellar}", shell=True, check=True)
+        test_env.execute(f"brew-offload add {target_formula}", shell=True, check=True)
+        brew_prefix = test_env.execute(["brew", "--prefix"], shell=True).strip()
+        print(f"brew prefix: {brew_prefix}")
         python_version = test_env.execute(["bash", "-c", f"{brew_prefix}/opt/{target_formula}/bin/{target_formula} --version > /dev/null; echo $?"])
         self.assertEqual(int(python_version.strip()), 0)
         is_symlink = test_env.execute(["bash", "-c", f"test -L {brew_prefix}/Cellar/{target_formula}; echo $?"])
