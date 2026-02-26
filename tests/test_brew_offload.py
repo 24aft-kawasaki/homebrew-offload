@@ -19,7 +19,7 @@ class Docker:
             self.env = os.environ.copy()
             self.env["PATH"] = f"{self.brew_directory}/brew/bin:{self.env['PATH']}"
 
-        def execute(self, command: str | list[str], shell: bool=False, *, check: bool=False) -> str:
+        def run(self, command: str | list[str], shell: bool=False, *, check: bool=False) -> str:
             # どちらの型でもシェルを使うので、リストを文字列に変換
             if isinstance(command, list) and shell:
                 command = " ".join(str(arg) for arg in command)
@@ -103,30 +103,29 @@ class BrewOffloadTestCase(unittest.TestCase):
         offload_cellar = test_env.brew_directory / "offload"
         # make sure offload cellar exists so config command succeeds
         offload_cellar.mkdir(parents=True, exist_ok=True)
-        path = test_env.execute("echo $PATH", shell=True, check=True)
+        path = test_env.run("echo $PATH", shell=True, check=True)
         print(f"PATH: {path}")
-        which_brew_offload = test_env.execute("which brew-offload", shell=True)
+        which_brew_offload = test_env.run("which brew-offload", shell=True)
         self.assertEqual(which_brew_offload.strip(), f"{test_env.brew_directory}/brew/bin/brew-offload")
         print(f"which brew-offload: {which_brew_offload}")
-        test_env.execute(f"brew-offload config offload_cellar {offload_cellar}", shell=True, check=True)
-        test_env.execute(f"brew-offload add {target_formula}", shell=True, check=True)
-        brew_prefix = test_env.execute(["brew", "--prefix"], shell=True).strip()
+        test_env.run(f"brew-offload config offload_cellar {offload_cellar}", shell=True, check=True)
+        test_env.run(f"brew-offload add {target_formula}", shell=True, check=True)
+        brew_prefix = test_env.run(["brew", "--prefix"], shell=True).strip()
         print(f"brew prefix: {brew_prefix}")
-        python_version = test_env.execute(["bash", "-c", f"{brew_prefix}/opt/{target_formula}/bin/{target_formula} --version > /dev/null; echo $?"])
+        python_version = test_env.run(["bash", "-c", f"{brew_prefix}/opt/{target_formula}/bin/{target_formula} --version > /dev/null; echo $?"])
         self.assertEqual(int(python_version.strip()), 0)
-        is_symlink = test_env.execute(["bash", "-c", f"test -L {brew_prefix}/Cellar/{target_formula}; echo $?"])
+        is_symlink = test_env.run(["bash", "-c", f"test -L {brew_prefix}/Cellar/{target_formula}; echo $?"])
         self.assertEqual(is_symlink.strip(), "0")
 
     @Docker.with_docker
-    def test_add_offloaded_formula(self, docker_client: Docker.DockerClient):
-        target_formula = "python@3.12"
-        offload_cellar = "/home/linuxbrew/.offload"
-        # to capture stdout and stderr, tty must be False
-        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
-        docker_client.compose.execute("test", ["brew-offload", "add", target_formula], tty=False)
-        stdout = docker_client.compose.execute("test", ["bash", "-c", f"brew-offload add {target_formula}; echo $?"], tty=False)
-        return_code = int(str(stdout).splitlines()[-1])
-        self.assertGreater(return_code, 0)
+    def test_add_offloaded_formula(self, test_env: Docker.TestEnv):
+        target_formula = "jq"
+        offload_cellar = test_env.brew_directory / "offload"
+        offload_cellar.mkdir()
+        test_env.run(["brew-offload", "config", "offload_cellar", str(offload_cellar)], shell=True, check=True)
+        test_env.run(["brew-offload", "add", target_formula], shell=True, check=True)
+        with self.assertRaises(subprocess.CalledProcessError):
+            test_env.run(["brew-offload", "add", target_formula], shell=True, check=True)
 
     @Docker.with_docker
     def test_remove_offloaded_formula(self, docker_client: Docker.DockerClient):
