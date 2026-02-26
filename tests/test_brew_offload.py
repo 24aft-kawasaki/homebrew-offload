@@ -36,6 +36,8 @@ class Docker:
         if cache:
             print("Using cached brew template directory, skipping setup script")
             return
+        # clean any existing template so setup script can recreate it
+        subprocess.run(f"rm -rf {brew_template_dir}", shell=True, check=False)
         subprocess.run(
             "./testenv/setup_brew_template.sh && brew --version && which brew",
             shell=True, check=True, text=True, executable="/bin/bash", timeout=600
@@ -132,9 +134,12 @@ class BrewOffloadTestCase(unittest.TestCase):
         target_formula = "jq"
         target_command = "jq"
         offload_cellar = test_env.brew_directory / "offload"
+        offload_cellar.mkdir()
         def execute(*command: str) -> str:
             return test_env.run(list(command), shell=True, check=True)
-        execute("brew-offload", "add",    target_formula)
+        execute(f"brew-offload config offload_cellar {offload_cellar}")
+        stdout = execute("brew-offload", "add",    target_formula, "2>&1", "||", "true")
+        self.assertEqual(stdout, "")
         execute("brew-offload", "remove", target_formula)
         execute(target_command, "--version")
         cellar = execute("brew", "--cellar").strip()
@@ -146,11 +151,13 @@ class BrewOffloadTestCase(unittest.TestCase):
             execute(f"brew-offload remove {target_formula}")
 
     @Docker.with_docker
-    def test_config_file_does_not_exist(self, docker_client: Docker.DockerClient):
-        offload_cellar = "/home/linuxbrew/.offload"
-        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", offload_cellar], tty=False)
-        docker_client.compose.execute("test", ["sudo", "rm", "-rf", "/etc/brew-offload"], tty=False)
-        docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
+    def test_config_file_does_not_exist(self, test_env: Docker.TestEnv):
+        offload_cellar = test_env.brew_directory / "offload"
+        offload_cellar.mkdir()
+        test_env.run(["brew-offload", "config", "offload_cellar", str(offload_cellar)], shell=True, check=True)
+        test_env.run(["rm", "-rf", f"{test_env.brew_directory}/brew/etc/brew-offload/config.json"], shell=True, check=True)
+        stdout = test_env.run("brew-offload add jq 2>&1", shell=True, check=False)
+        self.assertEqual(stdout, "")
 
     @Docker.with_docker
     def test_move_offload_celllar(self, docker_client: Docker.DockerClient):
