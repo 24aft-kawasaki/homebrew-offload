@@ -47,10 +47,16 @@ function install_brew-offload() {
     echo SHA256: $SHA
     sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
     brew tap-new user/repo
+    # create formula to populate tap metadata (URL, version)
     brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
     local TAP=$(brew --repository user/repo)
-    rm -rf $TAP/*
+    # copy workspace into tap, but keep the created formula's metadata
+    # instead of wiping everything, just overwrite the root contents and
+    # then reapply the sha256 patch to the formula file that will actually
+    # be installed.
     cp -R $SCRIPT_DIR/../* $TAP
+    # patch the tap formula again in case the copy replaced it
+    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$TAP/brew-offload.rb"
     chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
     # brew audit --strict brew-offload # This command is very slow and optional.
     brew install --verbose --formula --debug $TAP/brew-offload.rb
