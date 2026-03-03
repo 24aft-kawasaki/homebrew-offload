@@ -62,8 +62,8 @@ class BrewOffloadTestCase(unittest.TestCase):
     def test_brew_is_wrapped(self):
         wrapper = Docker.BREW_TEMPLATE_DIR / "brew/etc/brew-offload/brew-wrap"
         result = subprocess.run(
-            f"source {wrapper}; brew --version",
-            shell=True, capture_output=True, text=True, executable="/bin/bash", timeout=2
+            f"source {wrapper} && brew --version",
+            shell=True, capture_output=True, check=True, text=True, executable="/bin/bash", timeout=2,
         )
         self.assertEqual(result.stdout.splitlines()[0], "Your brew is wrapped by brew-offload")
         self.assertEqual(result.stderr, "")
