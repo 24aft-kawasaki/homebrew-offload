@@ -19,7 +19,7 @@ class Docker:
             self.env = os.environ.copy()
             self.env["PATH"] = f"{self.brew_directory}/brew/bin:{self.env['PATH']}"
 
-        def run(self, command: str | list[str], shell: bool=False, *, check: bool=False) -> str:
+        def run(self, command: str | list[str], *, shell: bool=False, check: bool=False) -> str:
             # どちらの型でもシェルを使うので、リストを文字列に変換
             if isinstance(command, list) and shell:
                 command = " ".join(str(arg) for arg in command)
@@ -156,14 +156,20 @@ class BrewOffloadTestCase(unittest.TestCase):
         offload_cellar.mkdir()
         test_env.run(["brew-offload", "config", "offload_cellar", str(offload_cellar)], shell=True, check=True)
         test_env.run(["rm", "-rf", f"{test_env.brew_directory}/brew/etc/brew-offload/config.json"], shell=True, check=True)
-        stdout = test_env.run("brew-offload add jq 2>&1", shell=True, check=False)
+        stdout = test_env.run("brew-offload add jq 2>&1", shell=True, check=True)
         self.assertEqual(stdout, "")
 
     @Docker.with_docker
-    def test_move_offload_celllar(self, docker_client: Docker.DockerClient):
-        old_offload_cellar = "/home/linuxbrew/.offload"
-        new_offload_cellar = "/home/linuxbrew/testenv/new_cellar"
-        docker_client.compose.execute("test", ["mkdir", "-p", new_offload_cellar], tty=False)
-        docker_client.compose.execute("test", ["brew-offload", "add", "python@3.12"], tty=False)
-        docker_client.compose.execute("test", ["brew-offload", "config", "offload_cellar", new_offload_cellar], tty=False)
-        docker_client.compose.execute("test", ["python3.12", "--version"], tty=False)
+    def test_move_offload_celllar(self, test_env: Docker.TestEnv):
+        old_offload_cellar = test_env.brew_directory / "old_offload"
+        new_offload_cellar = test_env.brew_directory / "new_offload"
+        old_offload_cellar.mkdir()
+        new_offload_cellar.mkdir()
+        run = test_env.run
+        run(["brew-offload", "config", "offload_cellar", str(old_offload_cellar)], shell=True, check=True)
+        run(["brew-offload", "add", "jq"], shell=True, check=True)
+        run(["brew-offload", "config", "offload_cellar", str(new_offload_cellar)], shell=True, check=True)
+        run(["jq", "--version"], shell=True, check=True)
+        cellar = run(["brew", "--cellar"], shell=True, check=True).strip()
+        print(f"cellar: {cellar}")
+        run(f"test -L {cellar}/jq", check=True, shell=True)
