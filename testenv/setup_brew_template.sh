@@ -44,6 +44,7 @@ function install_brew-offload() {
     local TEST_VERSION=0.0.1
     tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C $SCRIPT_DIR/../../ homebrew-offload
     local SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
+    echo SHA256: $SHA
     sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
     brew tap-new user/repo
     brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
