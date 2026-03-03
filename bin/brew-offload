@@ -155,8 +155,6 @@ class BrewOffload:
             config["offload_cellar"] = str(new_offload_cellar)
             self.target_path = new_offload_cellar
             self.dump_config(config)
-            if old_offload_cellar == self.DEFAULT_TARGET_PATH:
-                return 0
             self.mv_offload_cellar(new_offload_cellar, old_offload_cellar)
         return 0
 
@@ -198,18 +196,24 @@ class BrewOffload:
         return 0
     
     def mv_offload_cellar(self, new_cellar: Path, old_cellar: Path) -> int:
-        for formula in old_cellar.iterdir():
-            src = formula.absolute()
-            dst = new_cellar / formula.name
-            self.log.info(f"Moving offload cellar formula: {formula.name}")
-            shutil.copytree(src, dst)
         config = self.load_config()
         for formula in config["offloaded_formulae"]:
-            symlink = self.brew_cellar_path / formula
-            symlink.unlink()
-            os.symlink(new_cellar / formula, symlink, target_is_directory=True)
+            old_formula = old_cellar / formula
+            new_formula = new_cellar / formula
+            old_formula.copy(new_formula, follow_symlinks=True, preserve_metadata=True)
+            cellar_formula = self.brew_cellar_path / formula
+            def rmtree_on_exception(func, path, exc_info):
+                if path.is_symlink():
+                    path.unlink()
+                    func(path)
+                else:
+                    raise exc_info
+            shutil.rmtree(cellar_formula, ignore_errors=False, onexc=rmtree_on_exception)
+            cellar_formula.symlink_to(new_formula, target_is_directory=True)
+        if old_cellar == self.brew_cellar_path:
+            return 0
         for formula in old_cellar.iterdir():
-            shutil.rmtree(formula.absolute())
+            shutil.rmtree(formula)
         return 0
 
     def execute_original_brew(self, original_brew_args: list[str]) -> int:

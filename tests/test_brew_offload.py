@@ -173,3 +173,13 @@ class BrewOffloadTestCase(unittest.TestCase):
         cellar = run(["brew", "--cellar"], shell=True, check=True).strip()
         print(f"cellar: {cellar}")
         run(f"test -L {cellar}/jq", check=True, shell=True)
+
+    @Docker.with_docker
+    def test_move_offload_celllar_from_default(self, test_env: Docker.TestEnv):
+        new_offload_cellar = test_env.brew_directory / "new_offload"
+        run = test_env.run
+        run(["brew-offload", "add", "jq"], shell=True, check=True)
+        run(["mkdir", str(new_offload_cellar)], shell=True, check=True)
+        run(["brew-offload", "config", "offload_cellar", str(new_offload_cellar)], shell=True, check=True)
+        cellar = run(["brew", "--cellar"], shell=True, check=True).strip()
+        run(f"test -L {cellar}/jq", check=True, shell=True)
