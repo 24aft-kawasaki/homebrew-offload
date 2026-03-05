@@ -45,10 +45,10 @@ function install_brew-offload() {
     tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C $SCRIPT_DIR/../../ homebrew-offload
     local SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
     echo SHA256: $SHA
-    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
+    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$SCRIPT_DIR/../brew-offload.rb"
     brew tap-new user/repo
     # create formula to populate tap metadata (URL, version)
-    brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
+    brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION --no-edit
     local TAP=$(brew --repository user/repo)
     # copy workspace into tap, but keep the created formula's metadata
     # instead of wiping everything, just overwrite the root contents and
