@@ -56,7 +56,7 @@ function install_brew-offload() {
     # be installed.
     cp -R $SCRIPT_DIR/../* $TAP
     # patch the tap formula again in case the copy replaced it
-    # sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$TAP/brew-offload.rb"
+    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$TAP/brew-offload.rb"
     chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
     # brew audit --strict brew-offload # This command is very slow and optional.
     brew install --verbose --formula --debug $TAP/brew-offload.rb
