@@ -45,10 +45,11 @@ jobs:
     needs: prepare
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.9", "3.13"]
+        python-version: ["3.14"]
+        os: [ubuntu-latest, macos-latest]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -67,6 +68,7 @@ jobs:
 
       - name: Run tests
         run: |
+          # MacOS runner already has Homebrew installed and PATH set up, but we need to do it manually on Linux.
           export PATH=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
           set +e
           pipenv --rm || true
@@ -74,6 +76,10 @@ jobs:
           pipenv sync
           pipenv sync --dev
           pipenv run python --version
+
+          # Homebrew needs to be configured with a git user.
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           pipenv run test
 
   commit:
@@ -95,7 +101,7 @@ jobs:
           URL="${{ needs.prepare.outputs.url }}"
           SHA="${{ needs.prepare.outputs.sha }}"
 
-          sed -i "s|url    \".*\"|url    \"$URL\"|" "$FORMULA"
+          sed -i "s|url \".*\"|url \"$URL\"|"       "$FORMULA"
           sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "$FORMULA"
 
       - name: Commit & push changes

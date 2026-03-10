@@ -7,12 +7,13 @@ name = "pypi"
 
 [dev-packages]
 python-on-whales = "~=0.78.0"
+python-dotenv = "*"
 
 [requires]
-# Support Python 3.9, 3.10, 3.11, 3.12, 3.13 and 3.14
+# Support Python 3.14 and later
 # Pipenv will match the current installed Python version
 python_version = "3"
-# Minimum required version: 3.9
+# Minimum required version: 3.14
 # This is enforced at runtime in bin/brew-offload
 
 [scripts]

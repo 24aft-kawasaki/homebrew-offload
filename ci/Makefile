@@ -1,4 +1,4 @@
-PYTHON_VERSION:=3.13
+PYTHON_VERSION:=3.14
 PATH:=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
 SHELL:=/bin/bash
 
@@ -13,17 +13,17 @@ install-brew:
 	echo >> ${HOME}/.bashrc
 	echo 'eval "$$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ${HOME}/.bashrc
 
-install-python:
+install-python: install-brew
 	brew install python@${PYTHON_VERSION} pipx
 	pipx install pipenv
 	echo $$(brew --prefix)
 	pipx ensurepath
 	${SHELL} -c 'pipenv sync --dev'
 
-link-brew-offload-config-file:
-	mkdir -p ${HOMEBREW_PREFIX}/etc/brew-offload
+link-brew-offload-config-file: install-brew
+	mkdir -p $$(brew --prefix)/etc/brew-offload
 	test -n "${localWorkspaceFolder}"
-	ln -s ${localWorkspaceFolder}/testenv/etc/brew-offload/config.json ${HOMEBREW_PREFIX}/etc/brew-offload/config.json
+	ln -s ${localWorkspaceFolder}/testenv/etc/brew-offload/config.json $$(brew --prefix)/etc/brew-offload/config.json
 
 set-path-to-brew-offload:
 	echo 'export PATH="$${PATH}:${localWorkspaceFolder}/bin"' >> $$HOME/.bashrc
