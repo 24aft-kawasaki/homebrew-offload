@@ -5,7 +5,7 @@ class BrewOffload < Formula
   sha256 "6b877d3067640794567496614c6bea7163228f1aecc8b675a831a7a33a198234"
   license ""
 
-  # Uses system Python 3.9+ - version check is performed at runtime
+  # Uses system Python 3.14+ - version check is performed at runtime
 
   def install
     bin.install "bin/brew-offload"

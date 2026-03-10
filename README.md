@@ -36,7 +36,7 @@ Key highlights include:
 - 🔄 **Automatic Operation** – Offloading happens automatically during install or upgrade operations.
 
 ## Brew wrapper
-Use the brew wrapper to integrate `brew-offload` with Homebrew. Add `source $(brew --prefix)/etc/brew-wrap` to your `.bashrc`.
+Use the brew wrapper to integrate `brew-offload` with Homebrew. Add `source $(brew --prefix)/etc/brew-offload/brew-wrap` to your `.bashrc`.
 
 ## Requirements
-- Python 3.13 or later
+- Python 3.14 or later

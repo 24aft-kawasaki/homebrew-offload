@@ -15,7 +15,7 @@ TEST_TARGET_FORMULAE=("${TEST_TARGET_FORMULAE[@]}")
 
 echo "Setting up Homebrew template at: $BREW_TEMPLATE_DIR"
 
-if ! (mkdir "$BREW_TEMPLATE_DIR" && mkdir "$BREW_TEMPLATE_DIR/brew"); then
+if ! (mkdir -p "$BREW_TEMPLATE_DIR/brew"); then
     echo "Error: Could not create directory $BREW_TEMPLATE_DIR/brew" 2>&1
     echo "Please clean up $BREW_TEMPLATE_DIR and try again." 2>&1
     exit 1
@@ -24,7 +24,7 @@ fi
 git clone --filter=blob:none "$HOMEBREW_REPO" "$BREW_TEMPLATE_DIR/brew"
 
 eval "$(brew shellenv)"
-test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
+test "$(realpath $(which brew))" = "$(realpath $BREW_TEMPLATE_DIR/brew/bin/brew)"
 brew --version
 
 if brew search brew-offload 2>/dev/null ; then
@@ -44,12 +44,22 @@ function install_brew-offload() {
     local TEST_VERSION=0.0.1
     tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C $SCRIPT_DIR/../../ homebrew-offload
     local SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
-    sed -i "s|sha256 \".*\"|sha256 \"$SHA\"|" "./brew-offload.rb"
+    echo SHA256: $SHA
+    # sed of MacOS doesn't support -i without a suffix, so use perl for in-place editing instead
+    perl -i -pe "s|url \".*\"|url \"file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz\"|" "$SCRIPT_DIR/../brew-offload.rb"
+    perl -i -pe "s|sha256 \".*\"|sha256 \"$SHA\"|" "$SCRIPT_DIR/../brew-offload.rb"
     brew tap-new user/repo
-    brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
+    # create formula to populate tap metadata (URL, version)
+    # Use EDITOR=true to skip interactive editor invocation
+    EDITOR=true brew create file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz --tap=user/repo --set-name=brew-offload --set-version=$TEST_VERSION
     local TAP=$(brew --repository user/repo)
-    rm -rf $TAP/*
+    # copy workspace into tap, but keep the created formula's metadata
+    # instead of wiping everything, just overwrite the root contents and
+    # then reapply the sha256 patch to the formula file that will actually
+    # be installed.
     cp -R $SCRIPT_DIR/../* $TAP
+    perl -i -pe "s|url \".*\"|url \"file:///tmp/homebrew-offload-$TEST_VERSION.tar.gz\"|" "$TAP/Formula/brew-offload.rb"
+    perl -i -pe "s|sha256 \".*\"|sha256 \"$SHA\"|" "$TAP/Formula/brew-offload.rb"
     chmod +t "$(brew --repository)"/Library/Homebrew/vendor/bundle/ruby/*/gems
     # brew audit --strict brew-offload # This command is very slow and optional.
     brew install --verbose --formula --debug $TAP/brew-offload.rb
