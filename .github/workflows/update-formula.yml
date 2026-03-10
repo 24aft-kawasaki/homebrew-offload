@@ -67,6 +67,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run tests
+        env:
+          GIT_CURL_VERBOSE: 1
+          GIT_TRACE: 1
         run: |
           # MacOS runner already has Homebrew installed and PATH set up, but we need to do it manually on Linux.
           export PATH=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin

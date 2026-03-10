@@ -21,7 +21,7 @@ if ! (mkdir "$BREW_TEMPLATE_DIR" && mkdir "$BREW_TEMPLATE_DIR/brew"); then
     exit 1
 fi
 
-git clone --filter=blob:none "$HOMEBREW_REPO" "$BREW_TEMPLATE_DIR/brew"
+git clone --filter=blob:none "$HOMEBREW_REPO" "$BREW_TEMPLATE_DIR/brew" 2>&1
 
 eval "$(brew shellenv)"
 test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
