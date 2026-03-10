@@ -1,8 +1,8 @@
 class BrewOffload < Formula
   desc "Homebrew wrapper to offload some formulae"
   homepage "https://github.com/24aft-kawasaki/homebrew-offload"
-  url "https://github.com/24aft-kawasaki/homebrew-offload/archive/refs/tags/v0.3.1.tar.gz"
-  sha256 "98a30bb634fcbec80a605b7387cd528ba1f348c35d954a09fd7a6bd9ba3535bd"
+  url "https://github.com/24aft-kawasaki/homebrew-offload/archive/refs/tags/v0.4.0.tar.gz"
+  sha256 "006975cfae793d5e53ada3695a34e4ed09dbfe69eb3775cfb9bf12e07f4c6272"
   license ""
 
   # Uses system Python 3.14+ - version check is performed at runtime
