@@ -55,6 +55,7 @@ function install_brew-offload() {
     tar czvf /tmp/homebrew-offload-$TEST_VERSION.tar.gz -C $SCRIPT_DIR/../../ homebrew-offload
     local SHA=$(sha256sum /tmp/homebrew-offload-$TEST_VERSION.tar.gz) && SHA=${SHA%% *}
     echo SHA256: $SHA
+    # sed of MacOS doesn't support -i without a suffix, so use perl for in-place editing instead
     perl -i -pe "s|sha256 \".*\"|sha256 \"$SHA\"|" "$SCRIPT_DIR/../brew-offload.rb"
     brew tap-new user/repo
     # create formula to populate tap metadata (URL, version)
