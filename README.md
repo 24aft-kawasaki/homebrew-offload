@@ -40,3 +40,5 @@ Use the brew wrapper to integrate `brew-offload` with Homebrew. Add `source $(br
 
 ## Requirements
 - Python 3.14 or later
+
+> **Note:** This project is not yet a stable release. Minor updates may introduce breaking changes.
