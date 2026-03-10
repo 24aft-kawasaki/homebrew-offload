@@ -33,7 +33,8 @@ eval "echo hoge"
 set -x
 
 eval "$(brew shellenv)"
-test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
+# /tmp of MacOS is a symlink to /private/tmp, so resolve both sides to ensure they match.
+test "$(realpath $(which brew))" = "$(realpath $BREW_TEMPLATE_DIR/brew/bin/brew)"
 brew --version
 
 if brew search brew-offload 2>/dev/null ; then
