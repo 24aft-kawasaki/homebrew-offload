@@ -30,6 +30,8 @@ brew shellenv
 
 eval "echo hoge"
 
+set -x
+
 eval "$(brew shellenv)"
 test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
 brew --version
