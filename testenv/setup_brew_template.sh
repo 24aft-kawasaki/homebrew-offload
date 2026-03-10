@@ -23,6 +23,9 @@ fi
 
 git clone --filter=blob:none "$HOMEBREW_REPO" "$BREW_TEMPLATE_DIR/brew" 2>&1
 
+echo $PATH
+which brew
+
 eval "$(brew shellenv)"
 test "$(which brew)" = "$BREW_TEMPLATE_DIR/brew/bin/brew"
 brew --version
