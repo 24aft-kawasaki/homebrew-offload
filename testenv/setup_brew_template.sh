@@ -15,7 +15,7 @@ TEST_TARGET_FORMULAE=("${TEST_TARGET_FORMULAE[@]}")
 
 echo "Setting up Homebrew template at: $BREW_TEMPLATE_DIR"
 
-if ! (mkdir "$BREW_TEMPLATE_DIR" && mkdir "$BREW_TEMPLATE_DIR/brew"); then
+if ! (mkdir -p "$BREW_TEMPLATE_DIR/brew"); then
     echo "Error: Could not create directory $BREW_TEMPLATE_DIR/brew" 2>&1
     echo "Please clean up $BREW_TEMPLATE_DIR and try again." 2>&1
     exit 1

@@ -15,8 +15,8 @@ class Docker:
     BREW_TEMPLATE_DIR = Path("placeholder")
     class TestEnv:
         def __init__(self, func_name: str):
-            self.brew_directory = Path(f"/tmp/brew_{func_name}")
             self.env = os.environ.copy()
+            self.brew_directory = Path(self.env["BREW_TEMPLATE_DIR"]).parent / f"brew_{func_name}"
             self.env["PATH"] = f"{self.brew_directory}/brew/bin:{self.env['PATH']}"
 
         def run(self, command: str | list[str], *, shell: bool=False, check: bool=False) -> str:
@@ -48,7 +48,7 @@ class Docker:
     def with_docker(cls, func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            brew_directory = Path(f"/tmp/brew_{func.__name__}")
+            brew_directory = cls.BREW_TEMPLATE_DIR.parent / f"brew_{func.__name__}"
             cls.BREW_TEMPLATE_DIR.copy(brew_directory, preserve_metadata=True)
             return func(test_env=cls.TestEnv(func.__name__), *args, **kwargs)
         return wrapper
