@@ -2,13 +2,13 @@
 
 import sys
 
-# Check Python version (3.9+)
-if sys.version_info < (3, 9):
-    print("Error: brew-offload requires Python 3.9 or later.", file=sys.stderr)
+# Check Python version (3.14+)
+if sys.version_info < (3, 14):
+    print("Error: brew-offload requires Python 3.14 or later.", file=sys.stderr)
     print(f"Found Python {sys.version_info.major}.{sys.version_info.minor}.", file=sys.stderr)
-    print("\nPlease install Python 3.9 or later:", file=sys.stderr)
-    print("  - On macOS with Homebrew: brew install python@3.9", file=sys.stderr)
-    print("  - On Linux: Install Python 3.9+ from your package manager", file=sys.stderr)
+    print("\nPlease install Python 3.14 or later:", file=sys.stderr)
+    print("  - On macOS with Homebrew: brew install python@3.14", file=sys.stderr)
+    print("  - On Linux: Install Python 3.14+ from your package manager", file=sys.stderr)
     sys.exit(1)
 
 import argparse
@@ -28,7 +28,8 @@ class ConfigDecodeError(json.JSONDecodeError):
     pass
 
 class BrewOffload:
-    DEFAULT_TARGET_PATH = Path.home() / ".offload"
+    # initialized outside of class definition, because it needs brew prefix path.
+    DEFAULT_TARGET_PATH = Path("placeholder")
 
     def __init__(self, args: list[str]) -> None:
         self.log = logging.getLogger(__name__)
@@ -40,6 +41,8 @@ class BrewOffload:
         # TODO: To test, file access must not be called, if original brew is executed.
         # Plese refactor with test codes.
         self.target_path = self.DEFAULT_TARGET_PATH
+        if not self.config_path.exists(follow_symlinks=True):
+            self.init_config_file()
         config = self.load_config()
         if "offload_cellar" in config:
             self.target_path = Path(config["offload_cellar"])
@@ -91,24 +94,24 @@ class BrewOffload:
         return 1
     
     def init_config_file(self) -> int:
-        if not self.config_path.exists(follow_symlinks=True):
-            self.config_path.touch()
-        config: Config = {
-            "offload_cellar": str(self.DEFAULT_TARGET_PATH),
+        self.config_path.touch()
+        initial_config: Config = {
+            "offload_cellar"    : str(self.DEFAULT_TARGET_PATH),
             "offloaded_formulae": []
         }
         try:
             config = self.load_config()
-            if "offloaded_formulae" in config:
-                return 0
+            if not "offload_cellar"     in config:
+                config["offload_cellar"]     = initial_config["offload_cellar"]
+            if not "offloaded_formulae" in config:
+                config["offloaded_formulae"] = initial_config["offloaded_formulae"]
         except ConfigDecodeError:
-            pass
+            config = initial_config
         self.dump_config(config)
         return 0
 
     
     def add(self) -> int:
-        self.init_config_file()
         config = self.load_config()
         if self.args.formula in config["offloaded_formulae"]:
             self.log.error(f"Formula '{self.args.formula}' is already offloaded.")
@@ -119,7 +122,6 @@ class BrewOffload:
         return self.sync()
 
     def remove(self) -> int:
-        self.init_config_file()
         config = self.load_config()
         if self.args.formula not in config["offloaded_formulae"]:
             self.log.error(f"Formula '{self.args.formula}' is not offloaded.")
@@ -130,11 +132,12 @@ class BrewOffload:
         return self.sync()
 
     def config(self) -> int:
-        self.init_config_file()
         config = self.load_config()
         if self.args.key == "offload_cellar":
             new_offload_cellar = Path(self.args.value)
             old_offload_cellar = self.target_path
+
+            # Validation
             if not new_offload_cellar.absolute():
                 self.log.error("Offload cellar path must be absolute.")
                 return 1
@@ -142,15 +145,26 @@ class BrewOffload:
             if not new_offload_cellar.exists():
                 self.log.error("Offload cellar path does not exist.")
                 return 1
+            if not new_offload_cellar.is_dir():
+                self.log.error("Offload cellar path must be a directory.")
+                return 1
+            if any(new_offload_cellar.iterdir()):
+                self.log.error("Offload cellar must be empty.")
+                return 1
+
             config["offload_cellar"] = str(new_offload_cellar)
             self.target_path = new_offload_cellar
             self.dump_config(config)
-        
             self.mv_offload_cellar(new_offload_cellar, old_offload_cellar)
         return 0
 
     def sync(self) -> int:
         config = self.load_config()
+
+        # gracefully handle malformed config lacking the key
+        offload_cellar = config.get("offload_cellar", str(self.DEFAULT_TARGET_PATH))
+        if Path(offload_cellar) == self.DEFAULT_TARGET_PATH:
+            return 0
 
         # offloading
         for target_formula in config["offloaded_formulae"]:
@@ -182,18 +196,24 @@ class BrewOffload:
         return 0
     
     def mv_offload_cellar(self, new_cellar: Path, old_cellar: Path) -> int:
-        for formula in old_cellar.iterdir():
-            src = formula.absolute()
-            dst = new_cellar / formula.name
-            self.log.info(f"Moving offload cellar formula: {formula.name}")
-            shutil.copytree(src, dst)
         config = self.load_config()
         for formula in config["offloaded_formulae"]:
-            symlink = self.brew_cellar_path / formula
-            symlink.unlink()
-            os.symlink(new_cellar / formula, symlink, target_is_directory=True)
+            old_formula = old_cellar / formula
+            new_formula = new_cellar / formula
+            old_formula.copy(new_formula, follow_symlinks=True, preserve_metadata=True)
+            cellar_formula = self.brew_cellar_path / formula
+            def rmtree_on_exception(func, path, exc_info):
+                if path.is_symlink():
+                    path.unlink()
+                    func(path)
+                else:
+                    raise exc_info
+            shutil.rmtree(cellar_formula, ignore_errors=False, onexc=rmtree_on_exception)
+            cellar_formula.symlink_to(new_formula, target_is_directory=True)
+        if old_cellar == self.brew_cellar_path:
+            return 0
         for formula in old_cellar.iterdir():
-            shutil.rmtree(formula.absolute())
+            shutil.rmtree(formula)
         return 0
 
     def execute_original_brew(self, original_brew_args: list[str]) -> int:
@@ -204,7 +224,8 @@ class BrewOffload:
 
         return completedProcess.returncode
 
-        
+# initialized outside of class definition, because it needs brew prefix path.
+BrewOffload.DEFAULT_TARGET_PATH = BrewOffload.get_brew_cellar_path()    
 
 def arg_parse(*args: str) -> argparse.Namespace:
     if args[1:] and args[1] == "wrapped":
