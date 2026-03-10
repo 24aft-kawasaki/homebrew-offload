@@ -2,13 +2,13 @@
 
 import sys
 
-# Check Python version (3.9+)
-if sys.version_info < (3, 9):
-    print("Error: brew-offload requires Python 3.9 or later.", file=sys.stderr)
+# Check Python version (3.14+)
+if sys.version_info < (3, 14):
+    print("Error: brew-offload requires Python 3.14 or later.", file=sys.stderr)
     print(f"Found Python {sys.version_info.major}.{sys.version_info.minor}.", file=sys.stderr)
-    print("\nPlease install Python 3.9 or later:", file=sys.stderr)
-    print("  - On macOS with Homebrew: brew install python@3.9", file=sys.stderr)
-    print("  - On Linux: Install Python 3.9+ from your package manager", file=sys.stderr)
+    print("\nPlease install Python 3.14 or later:", file=sys.stderr)
+    print("  - On macOS with Homebrew: brew install python@3.14", file=sys.stderr)
+    print("  - On Linux: Install Python 3.14+ from your package manager", file=sys.stderr)
     sys.exit(1)
 
 import argparse

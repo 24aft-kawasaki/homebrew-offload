@@ -1,4 +1,4 @@
-PYTHON_VERSION:=3.13
+PYTHON_VERSION:=3.14
 PATH:=${PATH}:${HOME}/.local/bin:/home/linuxbrew/.linuxbrew/bin
 SHELL:=/bin/bash
 
