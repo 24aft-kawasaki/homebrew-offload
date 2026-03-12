@@ -18,4 +18,4 @@ python_version = "3"
 
 [scripts]
 # execute before test `pipenv sync --dev`
-test = "python -m unittest tests.test_brew_offload"
+test = "env PYTHONPATH=tests python -m unittest tests.test_brew_offload"

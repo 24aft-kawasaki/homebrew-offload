@@ -2,6 +2,11 @@
 
 import sys
 
+import config_lock
+
+# test local dependencies import 
+config_lock.test_import()
+
 # Check Python version (3.14+)
 if sys.version_info < (3, 14):
     print("Error: brew-offload requires Python 3.14 or later.", file=sys.stderr)

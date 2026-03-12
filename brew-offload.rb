@@ -10,7 +10,8 @@ class BrewOffload < Formula
   def install
     libexec.install Dir["bin/*"]
     (bin/"brew-offload").write_env_script libexec/"brew-offload",
-      :PATH => "$PATH:#{Formula["python@3.14"].opt_bin}"
+      :PATH => "$PATH:#{Formula["python@3.14"].opt_bin}",
+      :PYTHONPATH => libexec
     etc.install "testenv/etc/brew-offload"
     (etc/"brew-offload").install "etc/brew-wrap"
     zsh_completion.install "etc/_brew-offload"
