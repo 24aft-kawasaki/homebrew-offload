@@ -3,10 +3,17 @@ import os
 import time
 import unittest
 
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+from multiprocessing import Process
+from pathlib         import Path
+from tempfile        import NamedTemporaryFile
 
 from . import config_lock
+
+def _hold_lock_for_seconds(path, seconds):
+    with open(path, "a") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        time.sleep(seconds)
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 class ConfigLockTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -18,6 +25,46 @@ class ConfigLockTestCase(unittest.TestCase):
         if lock_file.exists():
             os.remove(lock_file)
     
+    def test_lock_success_when_free(self):
+        with config_lock.wait_for_lock(self.lock_path, timeout=2) as lock:
+            self.assertTrue(lock.writable())
+    
+    def test_lock_waits_and_succeeds(self):
+        start = time.time()
+
+        p_timeout = 2
+        p = Process(target=_hold_lock_for_seconds, args=(self.lock_path, p_timeout))
+        p.start()
+
+        sleep_time = 0.5
+        time.sleep(sleep_time)
+
+        main_timeout = 5
+        assert main_timeout > p_timeout
+        with config_lock.wait_for_lock(self.lock_path, timeout=main_timeout):
+            elapsed = time.time() - start
+            self.assertGreaterEqual(elapsed, p_timeout)
+            self.assertLess(elapsed, main_timeout)
+        
+        p.join()
+    
+    def test_lock_timeout_exits(self):
+        p_timeout = 10
+        p = Process(target=_hold_lock_for_seconds, args=(self.lock_path, p_timeout))
+        p.start()
+
+        time.sleep(0.5)
+
+        main_timeout = 2
+        assert main_timeout < p_timeout
+        with self.assertRaises(SystemExit) as e:
+            with config_lock.wait_for_lock(self.lock_path, timeout=main_timeout):
+                pass
+        
+        self.assertEqual(e.exception.code, 1)
+        p.terminate()
+        p.join()
+
     def test_decorated_function_execution(self):
         expect = "success"
         @config_lock.wait_for_lock(self.lock_path, timeout=5)
@@ -38,33 +85,3 @@ class ConfigLockTestCase(unittest.TestCase):
                 blocked_task()
             
             self.assertEqual(e.exception.code, 1)
-
-"""
-    def _hold_lock_for_seconds(self, path, seconds):
-        with open(path, "a") as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            time.sleep(seconds)
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-    def test_concurrent_lock(self):
-        lock_file = "/tmp/test_concurrent_lock/config_lock.lock"
-        @config_lock.wait_for_lock(lock_file, timeout=60)
-        def lock_and_wait():
-            time.sleep(60)
-        
-        @config_lock.wait_for_lock(lock_file, timeout=1)
-        def try_lock():
-            pass
-        # Start the first lock in a separate thread
-        import threading
-        thread1 = threading.Thread(target=lock_and_wait)
-        thread1.start()
-        # Give the first thread a moment to acquire the lock
-        time.sleep(1)
-        thread2 = threading.Thread(target=try_lock)
-        thread2.start()
-        time.sleep(2) # Give the second thread a moment to attempt to acquire the lock
-        # check that the second thread fails to acquire the lock and exits with a non-zero status code
-        thread2.join()
-        self.assertFalse(thread2.is_alive())
-"""
