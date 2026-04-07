@@ -1,6 +1,10 @@
 import functools
+import fcntl
+import json
+import multiprocessing
 import unittest
 import subprocess
+import time
 import os
 from pathlib import Path
 from sys import version_info
@@ -9,6 +13,21 @@ from dotenv import load_dotenv
 from python_on_whales import DockerClient
 
 from . import brew_offload
+
+
+def _run_brew_offload_add(env: dict[str, str], formula: str) -> int:
+    os.environ.clear()
+    os.environ.update(env)
+    args = ["brew-offload", "add", formula]
+    bf = brew_offload.BrewOffload(args)
+    return bf.execute()
+
+def _hold_config_lock(config_path: str, hold_seconds: float) -> int:
+    with open(config_path, "a") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        time.sleep(hold_seconds)
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+    return 0
 
 class Docker:
     client = DockerClient(compose_files=["testenv/compose.yml"])
@@ -183,3 +202,36 @@ class BrewOffloadTestCase(unittest.TestCase):
         run(["brew-offload", "config", "offload_cellar", str(new_offload_cellar)], shell=True, check=True)
         cellar = run(["brew", "--cellar"], shell=True, check=True).strip()
         run(f"test -L {cellar}/jq", check=True, shell=True)
+
+    @Docker.with_docker
+    def test_exclusive_control(self, test_env: Docker.TestEnv):
+        try:
+            formula = "test-formula"
+            config_path = test_env.brew_directory / "brew" / "etc" / "brew-offload" / "config.json"
+
+            lock_holder = multiprocessing.Process(
+                target=_hold_config_lock,
+                args=(str(config_path), 15),
+            )
+            lock_holder.start()
+            time.sleep(0.5)
+
+            env = test_env.env.copy()
+            env["PYTHONPATH"] = "/workspaces/homebrew-offload/tests"
+            add_process = multiprocessing.Process(
+                target=_run_brew_offload_add,
+                args=(env, formula),
+            )
+            add_process.start()
+
+            add_process.join(timeout=20)
+            lock_holder.join(timeout=20)
+
+            self.assertEqual(add_process.exitcode, 1)
+            self.assertEqual(lock_holder.exitcode, 0)
+
+            with open(config_path, "r") as f:
+                config = json.load(f)
+            self.assertNotIn(formula, config["offloaded_formulae"])
+        finally:
+            pass
