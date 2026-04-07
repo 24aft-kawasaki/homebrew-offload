@@ -19,6 +19,8 @@ class ConfigLockTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp_file = NamedTemporaryFile(delete=False)
         self.lock_path = self.tmp_file.name
+        # test doesn't need the file content, just the path, so we can close and delete it immediately
+        self.tmp_file.close()
     
     def tearDown(self) -> None:
         lock_file = Path(self.lock_path)
