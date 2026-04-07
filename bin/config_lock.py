@@ -23,11 +23,11 @@ def wait_for_lock(lock_path, timeout=10):
                     exit(1)
                 time.sleep(1)
     
-    try:
-        yield lock
-    finally:
-        fcntl.flock(fd, fcntl.LOCK_UN)
-                
+        try:
+            yield lock
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+                    
 
 def test_import() -> None:
     """Test that the config_lock module can be imported without errors."""
