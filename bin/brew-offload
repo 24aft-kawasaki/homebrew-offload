@@ -64,12 +64,6 @@ class BrewOffload:
                     e.doc, e.pos
                 ) from e
         return config
-    
-    @classmethod
-    def dump_config(cls, config: Config) -> None:
-        config_path = cls.get_brew_prefix_path() / "etc/brew-offload/config.json"
-        with open(config_path, "wt") as config_file:
-            json.dump(config, config_file)
 
     @staticmethod
     def get_brew_cellar_path() -> Path:
@@ -86,6 +80,11 @@ class BrewOffload:
             capture_output=True, text=True, check=True
         )
         return Path(result.stdout.strip())
+
+    def dump_config(self, config: Config) -> None:
+        with config_lock.wait_for_lock(self.config_path, timeout=10):
+            with open(self.config_path, "wt") as config_file:
+                json.dump(config, config_file)
 
     def execute(self) -> int:
         if self.args.offload is False:
